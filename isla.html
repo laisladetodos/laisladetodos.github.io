@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>La Isla de Todos · La isla en directo</title>
+<meta name="description" content="La isla de La Isla de Todos en directo: muévete por ella y toca cada edificio para ver de quién es.">
+<meta property="og:title" content="La Isla de Todos · La isla en directo">
+<meta property="og:image" content="foto_perfil.png">
+<link rel="icon" href="foto_perfil.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700;800;900&family=IBM+Plex+Mono:wght@700&display=swap">
+<style>
+:root{--sea:#0B4A66;--paper:#FFF8EA;--edge:#E6D3AE;--ink:#10263A;--muted:#6B5B45;--yellow:#FFC83D;--red:#C8233A;color-scheme:light}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--sea);font-family:"Rubik",system-ui,sans-serif;color:var(--ink)}
+canvas{display:block;width:100vw;height:100vh;height:100dvh;touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+.bar{position:fixed;left:0;right:0;top:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  padding:calc(12px + env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) 12px max(14px,env(safe-area-inset-left,0px));pointer-events:none}
+.chip{pointer-events:auto;background:var(--yellow);color:var(--ink);font-weight:900;font-size:14px;letter-spacing:.04em;padding:7px 12px;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.stat{pointer-events:auto;background:var(--paper);border-radius:10px;padding:6px 12px;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.stat b{font-family:"IBM Plex Mono",monospace;font-size:16px;font-variant-numeric:tabular-nums}
+.spacer{flex:1}
+a.btn{pointer-events:auto;background:var(--ink);color:#fff;text-decoration:none;font-weight:800;font-size:14px;padding:9px 14px;border-radius:10px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+a.btn:focus-visible,button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+.card{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));width:min(420px,calc(100vw - 28px));
+  background:var(--paper);border-radius:18px;padding:16px 18px;box-shadow:0 14px 40px rgba(0,0,0,.4);box-sizing:border-box}
+.card::after{content:"";position:absolute;inset:7px;border:2px solid var(--edge);border-radius:12px;pointer-events:none}
+.card .eyebrow{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.card .title{font-size:22px;font-weight:900;margin:2px 0 4px;overflow-wrap:anywhere}
+.card .who{font-family:"IBM Plex Mono",monospace;font-weight:700;color:var(--red);overflow-wrap:anywhere}
+.card .meta{color:var(--muted);font-size:14px;margin-top:4px}
+.card button{position:absolute;right:10px;top:8px;border:0;background:transparent;font-size:26px;line-height:1;color:var(--muted);cursor:pointer;width:44px;height:44px;z-index:1}
+.hint{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));color:#D5EEF3;font-size:14px;text-align:center;width:calc(100vw - 28px);pointer-events:none}
+</style>
+</head>
+<body>
+<canvas id="c" aria-label="Mapa de la isla. Arrastra para moverte, pellizca o usa la rueda para acercar y toca un edificio para ver de quién es."></canvas>
+<div class="bar">
+  <span class="chip" id="dia">DÍA 1</span>
+  <span class="stat"><b id="hab">0</b> habitantes</span>
+  <span class="stat"><b id="cons">0</b> construcciones</span>
+  <span class="spacer"></span>
+  <a class="btn" href="./">Buscarme en la lista</a>
+</div>
+<div class="hint" id="hint">Arrastra para moverte · pellizca para acercar · toca un edificio</div>
+<div class="card" id="card" hidden>
+  <button id="close" aria-label="Cerrar">×</button>
+  <div class="eyebrow" id="cEyebrow"></div>
+  <div class="title" id="cTitle"></div>
+  <div class="who" id="cWho"></div>
+  <div class="meta" id="cMeta"></div>
+</div>
+<script src="isla-lib.js"></script>
+<script>
+'use strict';
+const SEED = 1.7;
+let ISLA = { dia: 1, habitantes: 0, construcciones: [] };
+let R = 1.45, slots = [], objs = [], people = [], selected = null;
+const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+// radio de la isla según habitantes (igual que los hitos de los vídeos)
+function radioPara(h) {
+  const pts = [[0, 1.45], [100, 2.8], [1000, 4.4], [10000, 6.5], [100000, 9.0]];
+  if (h <= 0) return 1.45;
+  for (let i = 1; i < pts.length; i++) if (h <= pts[i][0]) {
+    const [h0, r0] = pts[i - 1], [h1, r1] = pts[i];
+    const f = (Math.log10(Math.max(1, h)) - Math.log10(Math.max(1, h0))) / (Math.log10(h1) - Math.log10(Math.max(1, h0)));
+    return r0 + (r1 - r0) * clamp(f);
+  }
+  return 9.0;
+}
+// huecos para edificar, del centro hacia fuera (plaza con palmera y calle al muelle libres)
+function huecos(R) {
+  const out = [];
+  for (let i = -12; i <= 12; i++) for (let j = -12; j <= 12; j++) {
+    const x = i * 0.85 + (h2(i, j, 1) - 0.5) * 0.12, y = j * 0.85 + (h2(i, j, 2) - 0.5) * 0.12;
+    const r = Math.hypot(x, y); if (r < 0.75) continue;
+    if (Math.abs(x) < 0.5 && y > 0.3) continue;
+    const th = Math.atan2(y, x); if (r > islandR(th, R, SEED) - 0.45) continue;
+    out.push({ x, y, r: r + h2(i, j, 3) * 0.3 });
+  }
+  return out.sort((a, b) => a.r - b.r);
+}
+function construir() {
+  R = radioPara(ISLA.habitantes || 0);
+  slots = huecos(R);
+  objs = (ISLA.construcciones || []).slice(0, slots.length).map((c, k) => {
+    const s = slots[k], q = h2(k, 7, 9);
+    const base = { x: s.x, y: s.y, data: c, z: groundZ(s.x, s.y, R, SEED) };
+    return c.tipo === 'negocio' ? { ...base, type: 'shop', col: ROOFS[Math.floor(q * ROOFS.length)] }
+                                : { ...base, type: 'house', roof: ROOFS[Math.floor(q * ROOFS.length)], h: 0.38 + q * 0.1 };
+  });
+  const n = Math.min(40, Math.max(2, Math.round((ISLA.habitantes || 0) / 3)));
+  people = Array.from({ length: n }, (_, k) => ({ a: h2(k, 1, 4) * 6.28, r: 0.4 + h2(k, 2, 4) * (R - 0.6), sp: 0.05 + h2(k, 3, 4) * 0.08, col: SHIRTS[k % SHIRTS.length] }));
+  document.getElementById('dia').textContent = 'DÍA ' + (ISLA.dia || 1);
+  document.getElementById('hab').textContent = fmt(ISLA.habitantes || 0);
+  document.getElementById('cons').textContent = fmt((ISLA.construcciones || []).length);
+}
+
+// cámara
+cam.x = 0; cam.y = 0.2; cam.zoom = 1;
+function encuadre() { cam.u = Math.min(W / (R * 2.83 + 1.4), H / (R * 1.6 + 3)); }
+function resize() {
+  W = Math.round(innerWidth * dpr); H = Math.round(innerHeight * dpr);
+  cv.width = W; cv.height = H; cam.cx = W / 2; cam.cy = H * 0.54; encuadre();
+}
+addEventListener('resize', resize);
+
+function frame(ts) {
+  const t = ts / 1000;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  drawSea(t, R); drawShore(R, SEED, t); drawIsland(R, SEED);
+  const rc = islandR(Math.PI / 2, R, SEED);
+  drawPier(0, rc - 0.35, 1.9, Z_SAND);
+  const list = [{ d: -0.9, f: () => drawObj({ type: 'palm', x: -0.3, y: -0.5, s: 1 }, t, R, SEED) }];
+  for (const o of objs) list.push({ d: o.x + o.y, f: () => drawObj(o, t, R, SEED) });
+  people.forEach((p, k) => {
+    const a = p.a + t * p.sp, r = p.r * (0.85 + 0.15 * Math.sin(t * 0.3 + k));
+    let x = Math.cos(a) * r, y = Math.sin(a) * r;
+    const th = Math.atan2(y, x), lim = islandR(th, R, SEED) - 0.3; if (Math.hypot(x, y) > lim) { x *= lim / Math.hypot(x, y); y *= lim / Math.hypot(x, y); }
+    list.push({ d: x + y + 0.01, f: () => drawPerson(x, y, groundZ(x, y, R, SEED), p.col, t, 1.1, t * 8 + k) });
+  });
+  list.push({ d: 0.72 + rc + 0.85, f: () => drawFerry(0.72, rc + 1.15, Math.sin(t * 2.2) * 0.015, t) });
+  list.sort((a, b) => a.d - b.d); for (const o of list) o.f();
+  // nombres de los que salieron con nombre
+  let ni = 0;
+  for (const o of objs) if (o.data.usuario) {
+    const [sx, sy] = P(o.x, o.y, o.z); const lift = 0.75 + (ni++ % 3) * 0.42;
+    tag(sx, sy - lift * U(), o.data.usuario, { t: t + o.x, px: Math.max(14, Math.min(30, U() * 0.22)), bg: o === selected ? '#FFFFFF' : C.yellow });
+  }
+  if (selected && !selected.data.usuario) { const [sx, sy] = P(selected.x, selected.y, selected.z); tag(sx, sy - 0.75 * U(), '●', { t, px: 18, bg: '#FFFFFF' }); }
+  requestAnimationFrame(frame);
+}
+
+// interacción: arrastrar, pellizcar, rueda, tocar
+const ptrs = new Map(); let moved = 0, pinch0 = null;
+function screenDelta(dx, dy) { const u = U(); const a = dx / u, b = dy / (u * 0.5); return [(a + b) / 2, (b - a) / 2]; }
+cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = 0; document.getElementById('hint').hidden = true; });
+cv.addEventListener('pointermove', e => {
+  if (!ptrs.has(e.pointerId)) return;
+  const p = ptrs.get(e.pointerId), dx = (e.clientX - p.x) * dpr, dy = (e.clientY - p.y) * dpr;
+  if (ptrs.size === 1) { const [wx, wy] = screenDelta(dx, dy); cam.x -= wx; cam.y -= wy; moved += Math.abs(dx) + Math.abs(dy); }
+  p.x = e.clientX; p.y = e.clientY;
+  if (ptrs.size === 2) {
+    const [a, b] = [...ptrs.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (pinch0) cam.zoom = clamp(cam.zoom * d / pinch0, 0.5, 4); pinch0 = d; moved = 99;
+  }
+});
+function up(e) {
+  ptrs.delete(e.pointerId); if (ptrs.size < 2) pinch0 = null;
+  if (moved < 8 && e.type === 'pointerup') pick(e.clientX * dpr, e.clientY * dpr);
+}
+cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+cv.addEventListener('wheel', e => { e.preventDefault(); cam.zoom = clamp(cam.zoom * Math.exp(-e.deltaY * 0.0015), 0.5, 4); }, { passive: false });
+
+function pick(sx, sy) {
+  let best = null, bd = 1e9;
+  for (const o of objs) { const [px, py] = P(o.x, o.y, o.z + 0.3); const d = Math.hypot(px - sx, py - sy); if (d < bd) { bd = d; best = o; } }
+  if (best && bd < U() * 0.55) show(best); else hide();
+}
+function show(o) {
+  selected = o; const c = o.data;
+  document.getElementById('cEyebrow').textContent = c.tipo === 'negocio' ? 'Negocio' : 'Casa';
+  document.getElementById('cTitle').textContent = c.nombre || (c.tipo === 'negocio' ? 'Negocio de un habitante' : 'Casa de un habitante');
+  document.getElementById('cWho').textContent = c.usuario || '';
+  document.getElementById('cMeta').textContent = 'Construido el día ' + (c.dia || 1) + (c.usuario ? ' · de los 3 primeros de ese día' : '');
+  document.getElementById('card').hidden = false;
+}
+function hide() { selected = null; document.getElementById('card').hidden = true; }
+document.getElementById('close').addEventListener('click', hide);
+
+resize(); construir(); requestAnimationFrame(frame);
+fetch('isla.json?v=' + Date.now(), { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => { if (d) { ISLA = d; construir(); encuadre(); } }).catch(() => {});
+</script>
+</body>
+</html>
