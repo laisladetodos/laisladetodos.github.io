@@ -48,6 +48,7 @@ input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:500 20px
 .row .d{grid-column:1/-1;color:var(--muted);font-size:14px}
 .badge{display:inline-block;margin-left:6px;background:var(--ink);color:var(--yellow);font:800 11px var(--display);letter-spacing:.06em;padding:3px 7px;border-radius:6px;vertical-align:middle}
 .stamp{position:absolute;right:14px;top:-14px;background:var(--paper);transform:rotate(-10deg);border:4px solid var(--green);color:var(--green);font-weight:900;font-size:16px;letter-spacing:.06em;padding:4px 10px;border-radius:8px;opacity:.85}
+.more{margin-top:4px;border:2px solid var(--ink);background:var(--yellow);color:var(--ink);font:800 16px var(--display);padding:12px;border-radius:12px;cursor:pointer}
 .empty{color:var(--muted);font-size:15px;line-height:1.5}
 .foot{color:#D5EEF3;font-size:14px;line-height:1.5;text-align:center}
 @media (prefers-reduced-motion:no-preference){.row{animation:in .25s ease-out}@keyframes in{from{opacity:0;transform:translateY(6px)}}}
@@ -61,14 +62,15 @@ input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:500 20px
   <section class="card" aria-labelledby="t1">
     <div class="eyebrow">Ayuntamiento de la isla</div>
     <h2 class="title" id="t1">Lista de habitantes</h2>
-    <p class="hint" style="margin-top:6px">Cada seguidor de la cuenta es un habitante. Busca tu nombre para ver tu número.</p>
+    <p class="hint" style="margin-top:6px">Cada seguidor de la cuenta es un habitante. Aquí tienes la lista completa, o busca tu usuario.</p>
     <div class="count"><b id="total">—</b><span id="totalLabel">habitantes en la isla</span></div>
   </section>
 
   <section class="card" aria-labelledby="t2">
     <label for="q" id="t2">Busca tu usuario de TikTok</label>
     <div class="search"><span aria-hidden="true">@</span><input id="q" type="search" inputmode="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="tu_usuario"></div>
-    <p class="hint" id="updated">Se actualiza una vez por semana.</p>
+    <p class="hint" id="updated">Se actualiza con cada episodio.</p>
+    <p class="hint" id="listHead" style="font-weight:800;color:var(--ink)"></p>
     <div class="results" id="results" aria-live="polite"></div>
   </section>
 
@@ -78,7 +80,7 @@ input{flex:1;min-width:0;border:0;outline:0;background:transparent;font:500 20px
 <script>
 const $ = (id) => document.getElementById(id);
 let entries = [];      // [numero, usuario, fecha]
-let total = 0, actualizado = null, loaded = false, available = true;
+let total = 0, actualizado = null, loaded = false, available = true, nota = '', shown = 300;
 
 function fmt(n){ return n.toLocaleString('es-ES'); }
 function fmtDate(s){ if(!s) return ''; const d = new Date(s); return isNaN(d) ? s : d.toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'}); }
@@ -87,7 +89,7 @@ function norm(s){ return (s||'').toLowerCase().replace(/^@/,'').trim(); }
 function renderCount(){
   $('total').textContent = loaded ? fmt(total) : (available ? '…' : '—');
   $('totalLabel').textContent = total === 1 ? 'habitante en la isla' : 'habitantes en la isla';
-  if (actualizado) $('updated').textContent = 'Última actualización: ' + fmtDate(actualizado) + '. Se actualiza una vez por semana.';
+  if (actualizado) $('updated').textContent = 'Última actualización: ' + fmtDate(actualizado) + '. Se actualiza con cada episodio.';
 }
 
 function row(e, exact){
@@ -114,7 +116,19 @@ function renderResults(){
     p.textContent = 'La isla acaba de abrir: la lista se publica en cuanto lleguen los primeros habitantes. Sígueme en TikTok y aparecerás aquí.';
     box.append(p); return;
   }
-  if (!q) return;
+  const MAX = 300;
+  if (!q) {
+    $('listHead').textContent = 'Todos los habitantes (' + fmt(entries.length) + ')' + (nota ? ' · ' + nota : '');
+    entries.slice(0, shown).forEach(e => box.append(row(e, false)));
+    if (entries.length > shown) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'more';
+      b.textContent = 'Ver más (' + fmt(entries.length - shown) + ' restantes)';
+      b.addEventListener('click', () => { shown += MAX; renderResults(); });
+      box.append(b);
+    }
+    return;
+  }
+  $('listHead').textContent = 'Resultados para @' + q;
   const exact = entries.filter(e => norm(e[1]) === q);
   const partial = entries.filter(e => norm(e[1]) !== q && norm(e[1]).includes(q)).slice(0, 20);
   if (exact.length) {
@@ -126,7 +140,7 @@ function renderResults(){
   partial.forEach(e => box.append(row(e, false)));
   if (!exact.length && !partial.length) {
     const p = document.createElement('p'); p.className = 'empty';
-    p.textContent = 'No aparece @' + q + '. Si me sigues desde hace poco, saldrás en la próxima actualización semanal.';
+    p.textContent = 'No aparece @' + q + '. Si me sigues desde hace poco, saldrás en la próxima actualización.';
     box.append(p);
   }
 }
@@ -141,7 +155,7 @@ renderCount(); renderResults();
     const d = await r.json();
     entries = (d.entradas || []).slice().sort((a, b) => a[0] - b[0]);
     total = typeof d.total === 'number' ? d.total : entries.length;
-    actualizado = d.actualizado || null;
+    actualizado = d.actualizado || null; nota = d.nota || '';
     loaded = true;
   } catch (e) { available = false; }
   renderCount(); renderResults();
