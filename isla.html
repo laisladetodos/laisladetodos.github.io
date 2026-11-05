@@ -115,10 +115,10 @@ function dibujarEdificio(o, t) {
 }
 function dibujarDetalle(o, t) {
   const d = o.data.dibujo_detalle, z = o.z; if (!d) return;
-  if (d === 'gato') drawCat(o.x + 0.5, o.y + 0.05, z, t, 1.2);
+  if (d === 'gato') drawCat(o.x - 0.15, o.y + 0.5, z, t, 1.2);
   if (d === 'gatos') { drawCat(o.x + 0.45, o.y - 0.12, z, t, 1.25, '#4A4A4A'); drawCat(o.x + 0.45, o.y + 0.18, z, t + 1, 1.25); }
   if (d === 'cobaya') drawCobaya(o.x + 0.5, o.y + 0.2, z, t, 1.4);
-  if (d === 'peru') drawFlagPeru(o.x + 0.42, o.y + 0.15, z, t);
+  if (d === 'peru') drawFlagPeru(o.x + 0.2, o.y, z + 0.7, t);
 }
 
 // cámara
