@@ -1,1 +1,71 @@
-{"dia": 2, "habitantes": 1, "actualizado": "2026-11-04", "construcciones": [{"tipo": "casa", "nombre": "La primera casa de la isla", "usuario": "@celia.mart_", "dia": 1}]}
+{
+ "dia": 3,
+ "habitantes": 34,
+ "actualizado": "2026-11-05",
+ "construcciones": [
+  {
+   "tipo": "casa",
+   "nombre": "La primera casa de la isla",
+   "usuario": "@celia.mart_",
+   "dia": 1
+  },
+  {
+   "tipo": "casa",
+   "nombre": "Casa del árbol",
+   "usuario": "@alejandro.fernnde2934",
+   "dia": 2,
+   "detalle": "casa del árbol"
+  },
+  {
+   "tipo": "casa",
+   "nombre": "Casa",
+   "usuario": "@noah.elijah.carra",
+   "dia": 2
+  },
+  {
+   "tipo": "casa",
+   "nombre": "Casa con cobaya",
+   "usuario": "@anita.1.2.1",
+   "dia": 2,
+   "detalle": "cobaya"
+  },
+  {
+   "tipo": "casa",
+   "dia": 2,
+   "detalle": "gato"
+  },
+  {
+   "tipo": "casa",
+   "dia": 2
+  },
+  {
+   "tipo": "casa",
+   "dia": 2,
+   "detalle": "bandera de Perú"
+  },
+  {
+   "tipo": "casa",
+   "dia": 2,
+   "detalle": "2 gatos"
+  },
+  {
+   "tipo": "casa",
+   "dia": 2
+  },
+  {
+   "tipo": "negocio",
+   "dia": 2,
+   "detalle": "bar"
+  },
+  {
+   "tipo": "negocio",
+   "dia": 2,
+   "detalle": "bar"
+  },
+  {
+   "tipo": "negocio",
+   "dia": 2,
+   "detalle": "veterinario"
+  }
+ ]
+}
