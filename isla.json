@@ -1,71 +1,117 @@
 {
  "dia": 3,
  "habitantes": 34,
+ "radio": 2.45,
  "actualizado": "2026-11-05",
  "construcciones": [
   {
    "tipo": "casa",
    "nombre": "La primera casa de la isla",
    "usuario": "@celia.mart_",
-   "dia": 1
+   "dia": 1,
+   "x": 0.6,
+   "y": -0.4,
+   "color": "#F2614C"
   },
   {
    "tipo": "casa",
+   "forma": "arbol",
    "nombre": "Casa del árbol",
    "usuario": "@alejandro.fernnde2934",
    "dia": 2,
-   "detalle": "casa del árbol"
+   "detalle": "casa del árbol",
+   "x": -0.95,
+   "y": -1.3
   },
   {
    "tipo": "casa",
    "nombre": "Casa",
    "usuario": "@noah.elijah.carra",
-   "dia": 2
+   "dia": 2,
+   "x": -1.45,
+   "y": 0.35,
+   "color": "#2E8FA8"
   },
   {
    "tipo": "casa",
    "nombre": "Casa con cobaya",
    "usuario": "@anita.1.2.1",
    "dia": 2,
-   "detalle": "cobaya"
+   "detalle": "con cobaya",
+   "dibujo_detalle": "cobaya",
+   "x": 1.65,
+   "y": -0.05,
+   "color": "#E9A93B"
   },
   {
    "tipo": "casa",
    "dia": 2,
-   "detalle": "gato"
-  },
-  {
-   "tipo": "casa",
-   "dia": 2
-  },
-  {
-   "tipo": "casa",
-   "dia": 2,
-   "detalle": "bandera de Perú"
+   "detalle": "con gato",
+   "dibujo_detalle": "gato",
+   "x": 0.75,
+   "y": 1.45,
+   "color": "#6C5CE7"
   },
   {
    "tipo": "casa",
    "dia": 2,
-   "detalle": "2 gatos"
+   "detalle": "con la bandera de Perú",
+   "dibujo_detalle": "peru",
+   "x": 0.25,
+   "y": -1.5,
+   "color": "#E76F8A"
   },
   {
    "tipo": "casa",
-   "dia": 2
+   "dia": 2,
+   "detalle": "con 2 gatos",
+   "dibujo_detalle": "gatos",
+   "x": -1.65,
+   "y": -0.65,
+   "color": "#4FA36B"
+  },
+  {
+   "tipo": "casa",
+   "dia": 2,
+   "x": -1.15,
+   "y": 1.3,
+   "color": "#3B4E8C"
+  },
+  {
+   "tipo": "casa",
+   "dia": 2,
+   "x": 1.35,
+   "y": -1.05,
+   "color": "#F2614C"
   },
   {
    "tipo": "negocio",
+   "forma": "bar",
+   "nombre": "Bar",
    "dia": 2,
-   "detalle": "bar"
+   "detalle": "bar",
+   "x": -0.55,
+   "y": 0.65,
+   "color": "#2E8FA8"
   },
   {
    "tipo": "negocio",
+   "forma": "bar",
+   "nombre": "Bar",
    "dia": 2,
-   "detalle": "bar"
+   "detalle": "bar",
+   "x": 1.4,
+   "y": 0.95,
+   "color": "#E9A93B"
   },
   {
    "tipo": "negocio",
+   "forma": "veterinario",
+   "nombre": "Veterinario",
    "dia": 2,
-   "detalle": "veterinario"
+   "detalle": "veterinario pequeño",
+   "x": 0.4,
+   "y": 0.45
   }
  ]
 }

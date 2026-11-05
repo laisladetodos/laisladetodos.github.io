@@ -83,19 +83,42 @@ function huecos(R) {
   return out.sort((a, b) => a.r - b.r);
 }
 function construir() {
-  R = radioPara(ISLA.habitantes || 0);
+  R = ISLA.radio || radioPara(ISLA.habitantes || 0);
   slots = huecos(R);
-  objs = (ISLA.construcciones || []).slice(0, slots.length).map((c, k) => {
-    const s = slots[k], q = h2(k, 7, 9);
-    const base = { x: s.x, y: s.y, data: c, z: groundZ(s.x, s.y, R, SEED) };
-    return c.tipo === 'negocio' ? { ...base, type: 'shop', col: ROOFS[Math.floor(q * ROOFS.length)] }
-                                : { ...base, type: 'house', roof: ROOFS[Math.floor(q * ROOFS.length)], h: 0.38 + q * 0.1 };
-  });
+  let k = 0;
+  objs = (ISLA.construcciones || []).map((c, i) => {
+    let x = c.x, y = c.y;
+    if (x == null) { const s = slots[k++]; if (!s) return null; x = s.x; y = s.y; }
+    const q = h2(i, 7, 9), col = c.color || ROOFS[Math.floor(q * ROOFS.length)];
+    const base = { x, y, data: c, z: SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED) };
+    const forma = c.forma || (c.tipo === 'negocio' ? 'tienda' : 'casa');
+    if (forma === 'arbol') return { ...base, type: 'treehouse' };
+    if (forma === 'bar') return { ...base, type: 'bar', col };
+    if (forma === 'veterinario') return { ...base, type: 'vet' };
+    if (forma === 'tienda') return { ...base, type: 'shop', col };
+    return { ...base, type: 'house', roof: col, h: c.x != null ? 0.42 : 0.38 + q * 0.1 };
+  }).filter(Boolean);
   const n = Math.min(40, Math.max(2, Math.round((ISLA.habitantes || 0) / 3)));
   people = Array.from({ length: n }, (_, k) => ({ a: h2(k, 1, 4) * 6.28, r: 0.4 + h2(k, 2, 4) * (R - 0.6), sp: 0.05 + h2(k, 3, 4) * 0.08, col: SHIRTS[k % SHIRTS.length] }));
   document.getElementById('dia').textContent = 'DÍA ' + (ISLA.dia || 1);
   document.getElementById('hab').textContent = fmt(ISLA.habitantes || 0);
   document.getElementById('cons').textContent = fmt((ISLA.construcciones || []).length);
+}
+// hasta los 100 habitantes la isla es solo arena (la hierba llega con el hito)
+const SOLO_ARENA = () => (ISLA.habitantes || 0) < 100;
+function dibujarEdificio(o, t) {
+  const z = o.z; shadowAt(o.x, o.y, z, 0.42, 0.2);
+  if (o.type === 'treehouse') drawTreeHouse(o, z);
+  else if (o.type === 'bar') drawBar(o, z);
+  else if (o.type === 'vet') drawVet(o, z);
+  else drawObj(o, t, R, SEED);
+}
+function dibujarDetalle(o, t) {
+  const d = o.data.dibujo_detalle, z = o.z; if (!d) return;
+  if (d === 'gato') drawCat(o.x + 0.5, o.y + 0.05, z, t, 1.2);
+  if (d === 'gatos') { drawCat(o.x + 0.45, o.y - 0.12, z, t, 1.25, '#4A4A4A'); drawCat(o.x + 0.45, o.y + 0.18, z, t + 1, 1.25); }
+  if (d === 'cobaya') drawCobaya(o.x + 0.5, o.y + 0.2, z, t, 1.4);
+  if (d === 'peru') drawFlagPeru(o.x + 0.42, o.y + 0.15, z, t);
 }
 
 // cámara
@@ -110,12 +133,13 @@ addEventListener('resize', resize);
 function frame(ts) {
   const t = ts / 1000;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  drawSea(t, R); drawShore(R, SEED, t); drawIsland(R, SEED);
+  drawSea(t, R); drawShore(R, SEED, t); if (SOLO_ARENA()) extrude(islandPts(R, SEED), 0, Z_SAND, C.sand, C.sandSide); else drawIsland(R, SEED);
   const rc = islandR(Math.PI / 2, R, SEED);
   drawPier(0, rc - 0.35, 1.9, Z_SAND);
-  const list = [{ d: -0.9, f: () => drawObj({ type: 'palm', x: -0.3, y: -0.5, s: 1 }, t, R, SEED) }];
-  for (const o of objs) list.push({ d: o.x + o.y, f: () => drawObj(o, t, R, SEED) });
+  const list = [{ d: -0.75, f: () => drawObj({ type: 'palm', x: -0.3, y: -0.45, s: 1, z: Z_SAND }, t, R, SEED) }];
+  for (const o of objs) { list.push({ d: o.x + o.y, f: () => dibujarEdificio(o, t) }); if (o.data.dibujo_detalle) list.push({ d: 100, f: () => dibujarDetalle(o, t) }); }
   people.forEach((p, k) => {
+    if (k >= 12) return;
     const a = p.a + t * p.sp, r = p.r * (0.85 + 0.15 * Math.sin(t * 0.3 + k));
     let x = Math.cos(a) * r, y = Math.sin(a) * r;
     const th = Math.atan2(y, x), lim = islandR(th, R, SEED) - 0.3; if (Math.hypot(x, y) > lim) { x *= lim / Math.hypot(x, y); y *= lim / Math.hypot(x, y); }
@@ -126,7 +150,7 @@ function frame(ts) {
   // nombres de los que salieron con nombre
   let ni = 0;
   for (const o of objs) if (o.data.usuario) {
-    const [sx, sy] = P(o.x, o.y, o.z); const lift = 0.75 + (ni++ % 3) * 0.42;
+    const [sx, sy] = P(o.x, o.y, o.z); const lift = o.type === 'treehouse' ? 1.75 : 1.05; ni++;
     tag(sx, sy - lift * U(), o.data.usuario, { t: t + o.x, px: Math.max(14, Math.min(30, U() * 0.22)), bg: o === selected ? '#FFFFFF' : C.yellow });
   }
   if (selected && !selected.data.usuario) { const [sx, sy] = P(selected.x, selected.y, selected.z); tag(sx, sy - 0.75 * U(), '●', { t, px: 18, bg: '#FFFFFF' }); }
@@ -162,9 +186,10 @@ function pick(sx, sy) {
 function show(o) {
   selected = o; const c = o.data;
   document.getElementById('cEyebrow').textContent = c.tipo === 'negocio' ? 'Negocio' : 'Casa';
+  const extra = c.detalle ? ' · ' + c.detalle : '';
   document.getElementById('cTitle').textContent = c.nombre || (c.tipo === 'negocio' ? 'Negocio de un habitante' : 'Casa de un habitante');
   document.getElementById('cWho').textContent = c.usuario || '';
-  document.getElementById('cMeta').textContent = 'Construido el día ' + (c.dia || 1) + (c.usuario ? ' · de los 3 primeros de ese día' : '');
+  document.getElementById('cMeta').textContent = 'Construido el día ' + (c.dia || 1) + extra + (c.usuario && c.dia > 1 ? ' · de los 3 primeros de ese día' : (c.usuario ? ' · primera casa de la isla' : ''));
   document.getElementById('card').hidden = false;
 }
 function hide() { selected = null; document.getElementById('card').hidden = true; }

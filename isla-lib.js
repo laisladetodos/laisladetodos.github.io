@@ -430,3 +430,56 @@ function gull(x, y, t, s = 1) {
   ctx.beginPath(); ctx.moveTo(x - 34 * s, y - 10 * s - f * 18 * s); ctx.quadraticCurveTo(x - 14 * s, y - 16 * s - f * 10 * s, x, y); ctx.quadraticCurveTo(x + 14 * s, y - 16 * s - f * 10 * s, x + 34 * s, y - 10 * s - f * 18 * s); ctx.stroke();
   ctx.fillStyle = 'rgba(10,40,60,0.18)'; ctx.beginPath(); ctx.ellipse(x + 30 * s, y + 160 * s, 26 * s, 6 * s, 0, 0, 7); ctx.fill();
 }
+
+/* ---- dibujos del Día 3 (iguales que en los vídeos) ---- */
+function drawTreeHouse(o, z) {
+  const x = o.x, y = o.y; shadowAt(x, y, z, 0.45, 0.22);
+  box(x - 0.08, y - 0.08, 0.16, 0.16, 0.62, z, C.woodDark);
+  for (const [dx, dy] of [[-0.22, -0.22], [0.22, -0.22], [-0.22, 0.22], [0.22, 0.22]]) box(x + dx - 0.03, y + dy - 0.03, 0.06, 0.06, 0.6, z, C.wood);
+  box(x - 0.36, y - 0.36, 0.72, 0.72, 0.06, z + 0.6, C.wood, { tcol: '#C98C57' });
+  const [lx, ly] = P(x, y, z + 0.95); const u = U();
+  ctx.fillStyle = '#3E9A4F'; for (const [dx, dy, r] of [[-0.35, 0.05, 0.3], [0.35, 0.0, 0.3], [0, -0.25, 0.36]]) { ctx.beginPath(); ctx.arc(lx + dx * u, ly + dy * u - 0.25 * u, r * u, 0, 7); ctx.fill(); }
+  drawHouse({ x, y, w: 0.46, d: 0.42, h: 0.3, hr: 0.22, roof: '#4FA36B', wall: '#E8C9A0' }, z + 0.66);
+  // escalera
+  const a = P(x - 0.1, y + 0.45, z), b = P(x - 0.1, y + 0.36, z + 0.62); ctx.strokeStyle = C.woodDark; ctx.lineWidth = Math.max(2, u * 0.025);
+  for (const off of [-0.06, 0.06]) { ctx.beginPath(); ctx.moveTo(a[0] + off * u, a[1]); ctx.lineTo(b[0] + off * u, b[1]); ctx.stroke(); }
+  for (let k = 1; k < 6; k++) { const q = k / 6; ctx.beginPath(); ctx.moveTo(lerp(a[0], b[0], q) - 0.06 * u, lerp(a[1], b[1], q)); ctx.lineTo(lerp(a[0], b[0], q) + 0.06 * u, lerp(a[1], b[1], q)); ctx.stroke(); }
+  ctx.fillStyle = '#58B865'; ctx.beginPath(); ctx.arc(lx + 0.42 * u, ly - 0.05 * u, 0.2 * u, 0, 7); ctx.fill();
+}
+function signBoard(x, y, z, kind) {
+  const [bx, by] = P(x, y, z); const u = U();
+  ctx.fillStyle = C.woodDark; ctx.fillRect(bx - 0.015 * u, by - 0.18 * u, 0.03 * u, 0.18 * u);
+  rrect(bx - 0.16 * u, by - 0.44 * u, 0.32 * u, 0.28 * u, 0.06 * u, '#FFFFFF', C.navy, Math.max(1.5, u * 0.02));
+  if (kind === 'vet') { ctx.fillStyle = C.green; const s = 0.07 * u; ctx.fillRect(bx - s * 0.35, by - 0.3 * u - s, s * 0.7, s * 2); ctx.fillRect(bx - s, by - 0.3 * u - s * 0.35, s * 2, s * 0.7); }
+  else icon('mug', bx, by - 0.29 * u, 0.0042 * u, C.navy);
+}
+function drawBar(o, z) { drawShop({ x: o.x, y: o.y, w: 0.66, d: 0.56, h: 0.44, col: o.col }, z); signBoard(o.x + 0.05, o.y - 0.05, z + 0.44, 'bar'); }
+function drawVet(o, z) { drawShop({ x: o.x, y: o.y, w: 0.52, d: 0.46, h: 0.38, col: C.green, wall: '#FFFFFF' }, z); signBoard(o.x, o.y - 0.05, z + 0.38, 'vet'); }
+function drawCat(x, y, z, t, s = 1, col = '#F29F4B') {
+  const [bx, by] = P(x, y, z); const u = U() * s; const bob = Math.sin(t * 3 + x) * 0.01 * u;
+  ctx.fillStyle = 'rgba(20,40,40,0.2)'; ctx.beginPath(); ctx.ellipse(bx, by, 0.1 * u, 0.04 * u, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = col;
+  ctx.beginPath(); ctx.ellipse(bx, by - 0.07 * u, 0.09 * u, 0.06 * u, 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(bx + 0.07 * u, by - 0.14 * u + bob, 0.05 * u, 0, 7); ctx.fill();
+  for (const dx of [0.04, 0.1]) { ctx.beginPath(); ctx.moveTo(bx + dx * u - 0.02 * u, by - 0.17 * u + bob); ctx.lineTo(bx + dx * u, by - 0.22 * u + bob); ctx.lineTo(bx + dx * u + 0.02 * u, by - 0.17 * u + bob); ctx.fill(); }
+  ctx.strokeStyle = col; ctx.lineWidth = 0.02 * u; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(bx - 0.08 * u, by - 0.08 * u); ctx.quadraticCurveTo(bx - 0.16 * u, by - 0.12 * u + Math.sin(t * 4 + x) * 0.03 * u, bx - 0.13 * u, by - 0.2 * u); ctx.stroke();
+  ctx.fillStyle = C.navy; for (const dx of [0.055, 0.085]) { ctx.beginPath(); ctx.arc(bx + dx * u, by - 0.145 * u + bob, 0.007 * u, 0, 7); ctx.fill(); }
+}
+function drawCobaya(x, y, z, t, s = 1) {
+  const [bx, by] = P(x, y, z); const u = U() * s; const w = Math.sin(t * 6) * 0.004 * u;
+  ctx.fillStyle = 'rgba(20,40,40,0.2)'; ctx.beginPath(); ctx.ellipse(bx, by, 0.1 * u, 0.035 * u, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#B8763A'; ctx.beginPath(); ctx.ellipse(bx, by - 0.06 * u, 0.1 * u, 0.065 * u, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.ellipse(bx + 0.04 * u, by - 0.06 * u, 0.06 * u, 0.055 * u, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#B8763A'; ctx.beginPath(); ctx.arc(bx + 0.08 * u, by - 0.09 * u + w, 0.045 * u, 0, 7); ctx.fill();
+  ctx.fillStyle = '#E8A9A0'; ctx.beginPath(); ctx.arc(bx + 0.06 * u, by - 0.13 * u + w, 0.018 * u, 0, 7); ctx.fill();
+  ctx.fillStyle = C.navy; ctx.beginPath(); ctx.arc(bx + 0.1 * u, by - 0.095 * u + w, 0.008 * u, 0, 7); ctx.fill();
+}
+function drawFlagPeru(x, y, z, t) {
+  const [bx, by] = P(x, y, z); const u = U();
+  ctx.fillStyle = '#DDDDDD'; ctx.fillRect(bx - 0.012 * u, by - 0.75 * u, 0.024 * u, 0.75 * u);
+  const fw = 0.36 * u, fh = 0.22 * u, x0 = bx + 0.012 * u, y0 = by - 0.74 * u;
+  for (let i = 0; i < 3; i++) { ctx.fillStyle = i === 1 ? '#FFFFFF' : '#D91023';
+    ctx.beginPath(); const xa = x0 + fw * i / 3, xb = x0 + fw * (i + 1) / 3; const wa = Math.sin(t * 4 + i) * 0.015 * u, wb = Math.sin(t * 4 + i + 1) * 0.015 * u;
+    ctx.moveTo(xa, y0 + wa); ctx.lineTo(xb, y0 + wb); ctx.lineTo(xb, y0 + fh + wb); ctx.lineTo(xa, y0 + fh + wa); ctx.closePath(); ctx.fill(); }
+}
