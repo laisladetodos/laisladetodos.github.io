@@ -67,6 +67,15 @@ function drawUnicornio(o, z) {
   for (let i = 0; i < 5; i++) { const [mx, my] = P(o.x - 0.2 + i * 0.12, o.y - 0.02, z + 0.72 - i * 0.01); ctx.fillStyle = cols[i]; ctx.beginPath(); ctx.arc(mx, my, 0.07 * u, 0, 7); ctx.fill(); }
 }
 function drawBasic(o, z) { shadowAt(o.x, o.y, z, 0.24, 0.12); drawHouse({ x: o.x, y: o.y, w: 0.34, d: 0.3, h: 0.24, hr: 0.16, roof: '#C9CFD6', wall: '#FBFBF7' }, z); }
+function fenceLine(x0, y0, x1, y1, z, gap) {   // valla blanca de madera
+  const n = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0) / 0.09)), u = U(), h = 0.13;
+  ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = Math.max(1, u * 0.018); ctx.lineCap = 'round';
+  for (let i = 0; i <= n; i++) { const q = i / n; if (gap && q > gap[0] && q < gap[1]) continue; const x = lerp(x0, x1, q), y = lerp(y0, y1, q);
+    const a = P(x, y, z), b = P(x, y, z + h); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+  ctx.strokeStyle = '#E8E2D6'; ctx.lineWidth = Math.max(1, u * 0.012);
+  for (const hh of [0.05, 0.1]) { const segs = gap ? [[0, gap[0]], [gap[1], 1]] : [[0, 1]];
+    for (const [q0, q1] of segs) { const a = P(lerp(x0, x1, q0), lerp(y0, y1, q0), z + hh), b = P(lerp(x0, x1, q1), lerp(y0, y1, q1), z + hh); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); } }
+}
 function drawCustom(o, z, t) {
   const f = o.forma || 'casa';
   if (f === 'arbol') return drawTreeHouse(o, z);
@@ -83,6 +92,18 @@ function drawCustom(o, z, t) {
   if (f === 'tienda') return drawShop({ x: o.x, y: o.y, col: o.color }, z);
   if (f === 'basica') return drawBasic(o, z);
   if (f === 'unicornio') return drawUnicornio(o, z);
+  if ((o.det || o.detalles || []).includes('piscina')) {   // jardín propio con piscina, dentro de su parcela
+    const g = 0.42; fillPoly([P(o.x - g, o.y - g, z + 0.006), P(o.x + g, o.y - g, z + 0.006), P(o.x + g, o.y + g, z + 0.006), P(o.x - g, o.y + g, z + 0.006)], '#86CC6E');
+    fenceLine(o.x - g, o.y - g, o.x + g, o.y - g, z); fenceLine(o.x - g, o.y - g, o.x - g, o.y + g, z);
+    const px = o.x - 0.22, py = o.y + 0.2, pw = 0.26, pd = 0.36;
+    fillPoly([P(px - pw / 2, py - pd / 2, z + 0.008), P(px + pw / 2, py - pd / 2, z + 0.008), P(px + pw / 2, py + pd / 2, z + 0.008), P(px - pw / 2, py + pd / 2, z + 0.008)], '#FFFFFF');
+    fillPoly([P(px - pw / 2 + 0.035, py - pd / 2 + 0.035, z + 0.01), P(px + pw / 2 - 0.035, py - pd / 2 + 0.035, z + 0.01), P(px + pw / 2 - 0.035, py + pd / 2 - 0.035, z + 0.01), P(px - pw / 2 + 0.035, py + pd / 2 - 0.035, z + 0.01)], '#4FC3E8');
+    const hx = o.x + 0.12, hy = o.y - 0.12; shadowAt(hx, hy, z, 0.34, 0.17);
+    drawHouse({ x: hx, y: hy, w: 0.5, d: 0.44, roof: o.color || C.coral, h: 0.38, hr: 0.26, wall: o.pared }, z);
+    if (o.puerta) { const w = 0.5, d = 0.44, x = hx - w / 2, Y = hy - d / 2 + d; fillPoly(faceL(x + w * 0.38, x + w * 0.62, z, z + 0.38 * 0.62, Y), o.puerta); }
+    fenceLine(o.x + g, o.y - g, o.x + g, o.y + g, z); fenceLine(o.x - g, o.y + g, o.x + g, o.y + g, z, [0.25, 0.45]);
+    return;
+  }
   shadowAt(o.x, o.y, z, 0.42, 0.2);
   drawHouse({ x: o.x, y: o.y, roof: o.color || C.coral, h: 0.42, wall: o.pared }, z);
   if (o.puerta) { const w = 0.62, d = 0.55, x = o.x - w / 2, Y = o.y - d / 2 + d; fillPoly(faceL(x + w * 0.38, x + w * 0.62, z, z + 0.42 * 0.62, Y), o.puerta); }
@@ -146,7 +167,7 @@ function drawDetails(o, z, t) {
   const det = o.det || []; let flags = 0;
   for (const d of det) {
     if (d === 'gato') drawCat(o.x - 0.15, o.y + 0.5, z, t, 1.2);
-    if (d === 'gato_negro') drawCat(o.x - 0.2, o.y + 0.5, z, t, 1.2, '#2B2B2B');
+    if (d === 'gato_negro') drawCat(o.x + 0.2, o.y + 0.3, z, t, 1.1, '#2B2B2B');
     if (d === 'gatos') { drawCat(o.x + 0.45, o.y - 0.12, z, t, 1.25, '#4A4A4A'); drawCat(o.x + 0.45, o.y + 0.18, z, t + 1, 1.25); }
     if (d === 'cobaya') drawCobaya(o.x + 0.5, o.y + 0.2, z, t, 1.4);
     if (d === 'hamster') drawHamster(o.x + 0.15, o.y + 0.5, z, t, 1.4);
@@ -154,7 +175,6 @@ function drawDetails(o, z, t) {
     if (d === 'perros') { drawDog(o.x - 0.2, o.y + 0.55, z, t, 1.2); drawDog(o.x + 0.25, o.y + 0.5, z, t + 1, 1.1, '#F2F2F2', '#9A9A9A'); }
     if (d === 'corazon') drawHeart(o, z);
     if (d === 'flores') drawFlowers(o, z);
-    if (d === 'piscina') drawPool(o, z);
     if (['peru', 'espana', 'zamora', 'cuba', 'canarias'].includes(d)) { drawFlag(o.x + 0.2 - flags * 0.32, o.y + flags * 0.05, z + 0.7, t + flags, d); flags++; }
   }
 }
