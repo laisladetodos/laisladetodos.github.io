@@ -52,6 +52,7 @@ a.btn:focus-visible,button:focus-visible{outline:3px solid var(--yellow);outline
   <div class="meta" id="cMeta"></div>
 </div>
 <script src="isla-lib.js"></script>
+<script src="isla-extras.js"></script>
 <script>
 'use strict';
 const SEED = 1.7;
@@ -98,23 +99,25 @@ function construir() {
     if (forma === 'tienda') return { ...base, type: 'shop', col };
     return { ...base, type: 'house', roof: col, h: c.x != null ? 0.42 : 0.38 + q * 0.1 };
   }).filter(Boolean);
+  // barrio de casas básicas (los que siguen y aún no han comentado), mismo reparto que en los vídeos
+  const ocup = [...objs.map(o => ({ x: o.x, y: o.y, forma: o.data.forma })), { x: -0.3, y: -0.45 }];
+  barrioSlots(R, ocup, ISLA.basicas || 0, SEED).forEach(b => objs.push({ x: b.x, y: b.y, type: 'basic', data: { tipo: 'casa', basica: true, nombre: 'Casa básica', detalle: 'de un habitante que aún no ha comentado' }, z: SOLO_ARENA() ? Z_SAND : groundZ(b.x, b.y, R, SEED) }));
   const n = Math.min(40, Math.max(2, Math.round((ISLA.habitantes || 0) / 3)));
   people = Array.from({ length: n }, (_, k) => ({ a: h2(k, 1, 4) * 6.28, r: 0.4 + h2(k, 2, 4) * (R - 0.6), sp: 0.05 + h2(k, 3, 4) * 0.08, col: SHIRTS[k % SHIRTS.length] }));
   document.getElementById('dia').textContent = 'DÍA ' + (ISLA.dia || 1);
   document.getElementById('hab').textContent = fmt(ISLA.habitantes || 0);
-  document.getElementById('cons').textContent = fmt((ISLA.construcciones || []).length);
+  document.getElementById('cons').textContent = fmt((ISLA.construcciones || []).length + (ISLA.basicas || 0));
 }
 // hasta los 100 habitantes la isla es solo arena (la hierba llega con el hito)
 const SOLO_ARENA = () => (ISLA.habitantes || 0) < 100;
 function dibujarEdificio(o, t) {
-  const z = o.z; shadowAt(o.x, o.y, z, 0.42, 0.2);
-  if (o.type === 'treehouse') drawTreeHouse(o, z);
-  else if (o.type === 'bar') drawBar(o, z);
-  else if (o.type === 'vet') drawVet(o, z);
-  else drawObj(o, t, R, SEED);
+  if (o.type === 'basic') return drawBasic(o, o.z);
+  const c = o.data, forma = c.forma || (c.tipo === 'negocio' ? 'tienda' : 'casa');
+  drawCustom({ ...c, x: o.x, y: o.y, forma, color: c.color || o.roof || o.col }, forma === 'puerto' ? Z_SAND : o.z, t);
 }
 function dibujarDetalle(o, t) {
-  const d = o.data.dibujo_detalle, z = o.z; if (!d) return;
+  const det = o.data.detalles || (o.data.dibujo_detalle ? [o.data.dibujo_detalle] : []); if (det.length) return drawDetails({ x: o.x, y: o.y, det }, o.z, t);
+  const d = null, z = o.z; if (!d) return;
   if (d === 'gato') drawCat(o.x - 0.15, o.y + 0.5, z, t, 1.2);
   if (d === 'gatos') { drawCat(o.x + 0.45, o.y - 0.12, z, t, 1.25, '#4A4A4A'); drawCat(o.x + 0.45, o.y + 0.18, z, t + 1, 1.25); }
   if (d === 'cobaya') drawCobaya(o.x + 0.5, o.y + 0.2, z, t, 1.4);
@@ -137,7 +140,7 @@ function frame(ts) {
   const rc = islandR(Math.PI / 2, R, SEED);
   drawPier(0, rc - 0.35, 1.9, Z_SAND);
   const list = [{ d: -0.75, f: () => drawObj({ type: 'palm', x: -0.3, y: -0.45, s: 1, z: Z_SAND }, t, R, SEED) }];
-  for (const o of objs) { list.push({ d: o.x + o.y, f: () => dibujarEdificio(o, t) }); if (o.data.dibujo_detalle) list.push({ d: 100, f: () => dibujarDetalle(o, t) }); }
+  for (const o of objs) { list.push({ d: o.x + o.y, f: () => dibujarEdificio(o, t) }); if (o.data.dibujo_detalle || o.data.detalles) list.push({ d: 100, f: () => dibujarDetalle(o, t) }); }
   people.forEach((p, k) => {
     if (k >= 12) return;
     const a = p.a + t * p.sp, r = p.r * (0.85 + 0.15 * Math.sin(t * 0.3 + k));

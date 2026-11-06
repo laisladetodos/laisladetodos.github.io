@@ -1,117 +1,295 @@
 {
- "dia": 3,
- "habitantes": 37,
- "radio": 2.45,
- "actualizado": "2026-11-05",
+ "dia": 4,
+ "habitantes": 101,
+ "radio": 3.6,
+ "actualizado": "2026-11-06",
  "construcciones": [
   {
    "tipo": "casa",
-   "nombre": "La primera casa de la isla",
-   "usuario": "@celia.mart_",
-   "dia": 1,
+   "forma": "casa",
    "x": 0.6,
    "y": -0.4,
-   "color": "#F2614C"
+   "dia": 1,
+   "color": "#E76F8A",
+   "usuario": "@celia.mart_",
+   "nombre": "La primera casa de la isla"
   },
   {
    "tipo": "casa",
    "forma": "arbol",
-   "nombre": "Casa del árbol",
-   "usuario": "@alejandro.fernnde2934",
-   "dia": 2,
-   "detalle": "casa del árbol",
    "x": -0.95,
-   "y": -1.3
+   "y": -1.3,
+   "dia": 2,
+   "usuario": "@alejandro.fernnde2934",
+   "nombre": "Casa del árbol"
   },
   {
    "tipo": "casa",
-   "nombre": "Casa",
-   "usuario": "@noah.elijah.carra",
-   "dia": 2,
+   "forma": "casa",
    "x": -1.45,
    "y": 0.35,
-   "color": "#2E8FA8"
+   "dia": 2,
+   "color": "#2E8FA8",
+   "usuario": "@noah.elijah.carra",
+   "nombre": "Casa"
   },
   {
    "tipo": "casa",
-   "nombre": "Casa con cobaya",
-   "usuario": "@anita.1.2.1",
-   "dia": 2,
-   "detalle": "con cobaya",
-   "dibujo_detalle": "cobaya",
+   "forma": "casa",
    "x": 1.65,
    "y": -0.05,
-   "color": "#E9A93B"
+   "dia": 2,
+   "color": "#E9A93B",
+   "detalles": [
+    "cobaya"
+   ],
+   "usuario": "@anita.1.2.1",
+   "nombre": "Casa con cobaya"
   },
   {
    "tipo": "casa",
-   "dia": 2,
-   "detalle": "con gato",
-   "dibujo_detalle": "gato",
+   "forma": "casa",
    "x": 0.75,
    "y": 1.45,
-   "color": "#6C5CE7"
+   "dia": 2,
+   "color": "#6C5CE7",
+   "detalles": [
+    "gato"
+   ]
   },
   {
    "tipo": "casa",
-   "dia": 2,
-   "detalle": "con la bandera de Perú",
-   "dibujo_detalle": "peru",
+   "forma": "casa",
    "x": 0.25,
    "y": -1.5,
-   "color": "#E76F8A"
+   "dia": 2,
+   "color": "#E76F8A",
+   "detalles": [
+    "peru"
+   ]
   },
   {
    "tipo": "casa",
-   "dia": 2,
-   "detalle": "con 2 gatos",
-   "dibujo_detalle": "gatos",
+   "forma": "casa",
    "x": -1.65,
    "y": -0.65,
-   "color": "#4FA36B"
+   "dia": 2,
+   "color": "#4FA36B",
+   "detalles": [
+    "gatos"
+   ]
   },
   {
    "tipo": "casa",
-   "dia": 2,
+   "forma": "casa",
    "x": -1.15,
    "y": 1.3,
+   "dia": 2,
    "color": "#3B4E8C"
   },
   {
    "tipo": "casa",
-   "dia": 2,
+   "forma": "casa",
    "x": 1.35,
    "y": -1.05,
+   "dia": 2,
    "color": "#F2614C"
   },
   {
    "tipo": "negocio",
    "forma": "bar",
-   "nombre": "Bar",
-   "dia": 2,
-   "detalle": "bar",
    "x": -0.55,
    "y": 0.65,
-   "color": "#2E8FA8"
+   "dia": 2,
+   "color": "#2E8FA8",
+   "detalles": [
+    "espana"
+   ]
   },
   {
    "tipo": "negocio",
    "forma": "bar",
-   "nombre": "Bar",
-   "dia": 2,
-   "detalle": "bar",
    "x": 1.4,
    "y": 0.95,
+   "dia": 2,
    "color": "#E9A93B"
   },
   {
    "tipo": "negocio",
    "forma": "veterinario",
-   "nombre": "Veterinario",
-   "dia": 2,
-   "detalle": "veterinario pequeño",
    "x": 0.4,
-   "y": 0.45
+   "y": 0.45,
+   "dia": 2
+  },
+  {
+   "tipo": "negocio",
+   "forma": "puerto",
+   "x": 3.4971,
+   "y": -0.7089,
+   "dia": 3,
+   "ang": -0.2,
+   "usuario": "@sarahelamranilol351",
+   "nombre": "Puerto"
+  },
+  {
+   "tipo": "negocio",
+   "forma": "kebab",
+   "x": 1.1033,
+   "y": -2.0749,
+   "dia": 3,
+   "usuario": "@honchopro67",
+   "nombre": "Kebab"
+  },
+  {
+   "tipo": "negocio",
+   "forma": "moviles",
+   "x": 1.5716,
+   "y": -2.0482,
+   "dia": 3,
+   "usuario": "@maside.forever",
+   "nombre": "Tienda de móviles"
+  },
+  {
+   "tipo": "casa",
+   "forma": "cueva",
+   "x": 1.7187,
+   "y": -1.6027,
+   "dia": 3
+  },
+  {
+   "tipo": "negocio",
+   "forma": "pizzeria",
+   "x": 2.46,
+   "y": -1.6282,
+   "dia": 3
+  },
+  {
+   "tipo": "negocio",
+   "forma": "kebab",
+   "x": 2.1468,
+   "y": -0.9558,
+   "dia": 3
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "x": 2.3411,
+   "y": -0.2048,
+   "dia": 3,
+   "color": "#D7263D",
+   "detalles": [
+    "zamora"
+   ],
+   "pared": "#FFFFFF"
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "x": 2.9409,
+   "y": 0.2315,
+   "dia": 3,
+   "color": "#3B9C8F"
+  },
+  {
+   "tipo": "negocio",
+   "forma": "restaurante",
+   "x": 2.2802,
+   "y": 0.5685,
+   "dia": 3
+  },
+  {
+   "tipo": "negocio",
+   "forma": "comisaria",
+   "x": 2.7053,
+   "y": 1.1763,
+   "dia": 3
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "x": 1.9709,
+   "y": 1.2799,
+   "dia": 3,
+   "color": "#9ED3F0",
+   "detalles": [
+    "corazon",
+    "hamster"
+   ]
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "x": 2.175,
+   "y": 1.993,
+   "dia": 3,
+   "color": "#F29F4B",
+   "detalles": [
+    "gato"
+   ]
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "x": 1.4468,
+   "y": 1.8518,
+   "dia": 3,
+   "color": "#C9CFD6",
+   "detalles": [
+    "flores",
+    "chihuahua"
+   ],
+   "pared": "#FFFFFF"
+  },
+  {
+   "tipo": "negocio",
+   "forma": "kebab",
+   "x": 1.2657,
+   "y": 2.3312,
+   "dia": 3
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "x": 0.7651,
+   "y": 2.222,
+   "dia": 3,
+   "color": "#3E9A4F",
+   "detalles": [
+    "gato_negro",
+    "piscina"
+   ],
+   "puerta": "#2E7D32"
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "x": -0.9604,
+   "y": 2.7893,
+   "dia": 3,
+   "color": "#2E6FD8",
+   "detalles": [
+    "cuba",
+    "canarias"
+   ]
+  },
+  {
+   "tipo": "negocio",
+   "forma": "perrera",
+   "x": -1.1213,
+   "y": 2.0652,
+   "dia": 3,
+   "detalles": [
+    "perros"
+   ]
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "x": -1.8162,
+   "y": 2.3246,
+   "dia": 3,
+   "color": "#8E6CC2"
   }
- ]
+ ],
+ "basicas": 72
 }
