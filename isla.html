@@ -83,25 +83,15 @@ function huecos(R) {
   }
   return out.sort((a, b) => a.r - b.r);
 }
+let PLAN = null;
 function construir() {
-  R = ISLA.radio || radioPara(ISLA.habitantes || 0);
-  slots = huecos(R);
-  let k = 0;
-  objs = (ISLA.construcciones || []).map((c, i) => {
-    let x = c.x, y = c.y;
-    if (x == null) { const s = slots[k++]; if (!s) return null; x = s.x; y = s.y; }
-    const q = h2(i, 7, 9), col = c.color || ROOFS[Math.floor(q * ROOFS.length)];
-    const base = { x, y, data: c, z: SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED) };
-    const forma = c.forma || (c.tipo === 'negocio' ? 'tienda' : 'casa');
-    if (forma === 'arbol') return { ...base, type: 'treehouse' };
-    if (forma === 'bar') return { ...base, type: 'bar', col };
-    if (forma === 'veterinario') return { ...base, type: 'vet' };
-    if (forma === 'tienda') return { ...base, type: 'shop', col };
-    return { ...base, type: 'house', roof: col, h: c.x != null ? 0.42 : 0.38 + q * 0.1 };
-  }).filter(Boolean);
-  // barrio de casas básicas (los que siguen y aún no han comentado), mismo reparto que en los vídeos
-  const ocup = [...objs.map(o => ({ x: o.x, y: o.y, forma: o.data.forma })), { x: -0.3, y: -0.45 }];
-  barrioSlots(R, ocup, ISLA.basicas || 0, SEED).forEach(b => objs.push({ x: b.x, y: b.y, type: 'basic', data: { tipo: 'casa', basica: true, nombre: 'Casa básica', detalle: 'de un habitante que aún no ha comentado' }, z: SOLO_ARENA() ? Z_SAND : groundZ(b.x, b.y, R, SEED) }));
+  // la ciudad se reparte sola por zonas (igual que en los vídeos): negocios, dos barrios de casas y barrio básico
+  const items = (ISLA.construcciones || []).map(c => ({ ...c, forma: c.forma || (c.tipo === 'negocio' ? 'tienda' : 'casa'), data: c }));
+  PLAN = planCiudad(items, ISLA.basicas || 0, SEED);
+  R = PLAN.SR;
+  const zf = (x, y) => SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED);
+  objs = PLAN.items.map(it => ({ x: it.x, y: it.y, type: 'custom', data: it.data, z: zf(it.x, it.y) }));
+  PLAN.basics.forEach(b => objs.push({ x: b.x, y: b.y, type: 'basic', data: { tipo: 'casa', basica: true, nombre: 'Casa básica', detalle: 'de un habitante que aún no ha comentado' }, z: zf(b.x, b.y) }));
   const n = Math.min(40, Math.max(2, Math.round((ISLA.habitantes || 0) / 3)));
   people = Array.from({ length: n }, (_, k) => ({ a: h2(k, 1, 4) * 6.28, r: 0.4 + h2(k, 2, 4) * (R - 0.6), sp: 0.05 + h2(k, 3, 4) * 0.08, col: SHIRTS[k % SHIRTS.length] }));
   document.getElementById('dia').textContent = 'DÍA ' + (ISLA.dia || 1);
@@ -139,7 +129,8 @@ function frame(ts) {
   drawSea(t, R); drawShore(R, SEED, t); if (SOLO_ARENA()) extrude(islandPts(R, SEED), 0, Z_SAND, C.sand, C.sandSide); else drawIsland(R, SEED);
   const rc = islandR(Math.PI / 2, R, SEED);
   drawPier(0, rc - 0.35, 1.9, Z_SAND);
-  const list = [{ d: -0.75, f: () => drawObj({ type: 'palm', x: -0.3, y: -0.45, s: 1, z: Z_SAND }, t, R, SEED) }];
+  if (PLAN) drawCityGround(PLAN, (x, y) => SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED));
+  const list = [{ d: -0.75, f: () => drawObj({ type: 'palm', x: 0, y: 0, s: 1.1, z: SOLO_ARENA() ? Z_SAND : groundZ(0, 0, R, SEED) }, t, R, SEED) }];
   for (const o of objs) { list.push({ d: o.x + o.y, f: () => dibujarEdificio(o, t) }); if (o.data.dibujo_detalle || o.data.detalles) list.push({ d: 100, f: () => dibujarDetalle(o, t) }); }
   people.forEach((p, k) => {
     if (k >= 12) return;

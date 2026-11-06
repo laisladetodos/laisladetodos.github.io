@@ -159,3 +159,80 @@ function barrioSlots(R, ocupados, n, seed) {
   }
   return out.sort((a, b) => a.d - b.d).slice(0, n);
 }
+
+/* ================= CIUDAD: zonas, manzanas, calles y forma de la isla ================= */
+const _islandR0 = islandR;
+let CITY = null;            // { shape: Float64Array, SR }
+window.islandR = function (th, R, seed) {
+  if (!CITY) return _islandR0(th, R, seed);
+  const N = CITY.shape.length; let f = (((th / (2 * Math.PI)) % 1) + 1) % 1 * N;
+  const i = Math.floor(f) % N, j = (i + 1) % N, a = f - Math.floor(f);
+  return (CITY.shape[i] * (1 - a) + CITY.shape[j] * a) * R / CITY.SR;
+};
+const ZONAS = {
+  com:  { sx: 1, sy: 1, p: 0.95, s: 0.42, b: 2, nombre: 'ZONA COMERCIAL', pad: '#EADCC4' },
+  resA: { sx: -1, sy: 1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DEL MUELLE', pad: '#E6EDD9' },
+  resB: { sx: 1, sy: -1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DEL FARO', pad: '#E6EDD9' },
+  bas:  { sx: -1, sy: -1, p: 0.62, s: 0.36, b: 3, nombre: 'BARRIO NUEVO', pad: '#DFE5E8' },
+};
+const CITY_OFF = 0.8, AVE = 0.34;
+function zonaLots(q, n) {
+  const out = [];
+  for (let k = 0; out.length < n; k++) {
+    const ring = []; for (let c = 0; c <= k; c++) for (let r = 0; r <= k; r++) if (Math.max(c, r) === k) ring.push([c, r]);
+    ring.sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]) || a[1] - b[1]);
+    for (const [c, r] of ring) { if (out.length >= n) break;
+      out.push({ c, r, x: q.sx * (CITY_OFF + q.p / 2 + c * q.p + Math.floor(c / q.b) * q.s), y: q.sy * (CITY_OFF + q.p / 2 + r * q.p + Math.floor(r / q.b) * q.s) }); }
+  }
+  return out;
+}
+function planCiudad(items, nBasic, seed) {
+  CITY = null;
+  const esNeg = it => !['casa', 'arbol', 'cueva', 'basica'].includes(it.forma || 'casa') || it.tipo === 'negocio' && !it.forma;
+  const grupos = { com: [], resA: [], resB: [], bas: [] }; let puerto = null, nr = 0;
+  for (const it of items) {
+    if (it.forma === 'puerto') { puerto = it; continue; }
+    if (esNeg(it)) grupos.com.push(it); else grupos[(nr++ % 2) ? 'resB' : 'resA'].push(it);
+  }
+  const zonas = {};
+  for (const k of ['com', 'resA', 'resB']) { const L = zonaLots(ZONAS[k], grupos[k].length); grupos[k].forEach((it, i) => Object.assign(it, { x: L[i].x, y: L[i].y, zona: k })); zonas[k] = L; }
+  const basics = zonaLots(ZONAS.bas, nBasic).map(l => ({ ...l, forma: 'basica', zona: 'bas' })); zonas.bas = basics;
+  // forma de la isla: cubre todas las parcelas con margen
+  const N = 180, need = new Float64Array(N);
+  for (let i = 0; i < N; i++) need[i] = _islandR0(i / N * 2 * Math.PI, 1.9, seed);
+  const pts = [];
+  for (const k in zonas) { const q = ZONAS[k]; for (const l of zonas[k]) pts.push([l.x, l.y, q.p * 0.5 + 0.75]); }
+  pts.push([0, 0, 1.4]);
+  for (const [x, y, m] of pts) { const d = Math.hypot(x, y), th = Math.atan2(y, x), w = Math.atan2(m, Math.max(0.01, d));
+    for (let i = 0; i < N; i++) { const a = i / N * 2 * Math.PI; let dd = Math.abs(((a - th + Math.PI * 3) % (2 * Math.PI)) - Math.PI); if (dd < w) need[i] = Math.max(need[i], (d + m) * Math.cos(dd)); } }
+  let sh = Float64Array.from(need);
+  for (let pass = 0; pass < 4; pass++) { const nx = new Float64Array(N); for (let i = 0; i < N; i++) { let s = 0; for (let k = -4; k <= 4; k++) s += sh[(i + k + N) % N]; nx[i] = Math.max(need[i], s / 9); } sh = nx; }
+  for (let i = 0; i < N; i++) sh[i] *= 1 + 0.025 * Math.sin(i / N * 2 * Math.PI * 7 + seed);
+  const SR = 5; CITY = { shape: sh, SR };
+  if (puerto) { const r = islandR(0, SR, seed); Object.assign(puerto, { x: r - 0.35, y: 0.05, ang: 0, zona: 'puerto' }); }
+  return { items, basics, zonas, SR };
+}
+function rectW(x0, y0, x1, y1, z, col) { fillPoly([P(x0, y0, z), P(x1, y0, z), P(x1, y1, z), P(x0, y1, z)], col); }
+function drawCityGround(plan, zf, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha = alpha;
+  const z = zf(0, 0) + 0.004, ASF = '#A9AFAB';
+  // calles de cada zona (asfalto) y manzanas (aceras)
+  for (const k in plan.zonas) { const q = ZONAS[k], L = plan.zonas[k]; if (!L.length) continue;
+    const xs = L.map(l => l.x), ys = L.map(l => l.y), e = q.p / 2 + q.s * 0.6;
+    rectW(Math.min(...xs) - e, Math.min(...ys) - e, Math.max(...xs) + e, Math.max(...ys) + e, z, ASF);
+    const blocks = {}; for (const l of L) { const id = Math.floor(l.c / q.b) + ',' + Math.floor(l.r / q.b); (blocks[id] = blocks[id] || []).push(l); }
+    for (const id in blocks) { const B = blocks[id], bx = B.map(l => l.x), by = B.map(l => l.y), m = q.p / 2 - 0.03;
+      rectW(Math.min(...bx) - m, Math.min(...by) - m, Math.max(...bx) + m, Math.max(...by) + m, z + 0.002, q.pad);
+      for (const l of B) rectW(l.x - q.p / 2 + 0.07, l.y - q.p / 2 + 0.07, l.x + q.p / 2 - 0.07, l.y + q.p / 2 - 0.07, z + 0.003, shade(q.pad, 0.25)); }
+  }
+  // avenidas en cruz y plaza
+  const R = CITY ? CITY.SR : 3; const ye = islandR(Math.PI / 2, R, 0) - 0.2, yb = -islandR(-Math.PI / 2, R, 0) + 0.4, xe = islandR(0, R, 0) - 0.2, xb = -islandR(Math.PI, R, 0) + 0.4;
+  rectW(-AVE, yb, AVE, ye, z + 0.005, ASF); rectW(xb, -AVE, xe, AVE, z + 0.005, ASF);
+  ctx.setLineDash([U() * 0.12, U() * 0.12]); ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = Math.max(1, U() * 0.025);
+  for (const [a, b] of [[[0, 0.9], [0, ye]], [[0, -0.9], [0, yb]], [[0.9, 0], [xe, 0]], [[-0.9, 0], [xb, 0]]]) { ctx.beginPath(); const p0 = P(a[0], a[1], z + 0.006), p1 = P(b[0], b[1], z + 0.006); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }
+  ctx.setLineDash([]);
+  const pl = []; for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2; pl.push(P(Math.cos(a) * 0.78, Math.sin(a) * 0.78, z + 0.007)); } fillPoly(pl, '#EFE6D2');
+  const pl2 = []; for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2; pl2.push(P(Math.cos(a) * 0.5, Math.sin(a) * 0.5, z + 0.008)); } fillPoly(pl2, '#E2D5BA');
+  ctx.restore();
+}
+function zonaCentro(plan, k) { const L = plan.zonas[k]; if (!L || !L.length) return null; const xs = L.map(l => l.x), ys = L.map(l => l.y); return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2, top: { x: Math.min(...xs), y: Math.min(...ys) } }; }
