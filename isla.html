@@ -131,6 +131,7 @@ function frame(ts) {
   drawPier(0, rc - 0.35, 1.9, Z_SAND);
   if (PLAN) drawCityGround(PLAN, (x, y) => SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED));
   const list = [{ d: -0.75, f: () => drawObj({ type: 'palm', x: 0, y: 0, s: 1.1, z: SOLO_ARENA() ? Z_SAND : groundZ(0, 0, R, SEED) }, t, R, SEED) }];
+  if (PLAN) drawParks(PLAN, (x, y) => SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED), (d, f) => list.push({ d, f }));
   for (const o of objs) { list.push({ d: o.x + o.y, f: () => dibujarEdificio(o, t) }); if (o.data.dibujo_detalle || o.data.detalles) list.push({ d: 100, f: () => dibujarDetalle(o, t) }); }
   people.forEach((p, k) => {
     if (k >= 12) return;

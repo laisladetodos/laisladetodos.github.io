@@ -57,6 +57,15 @@ function drawRestaurant(o, z) {
   const [ux, uy] = P(tx, ty, z + 0.42); const u = U(); ctx.fillStyle = C.woodDark; const [ex, ey] = P(tx, ty, z + 0.14); ctx.fillRect(ux - 0.01 * u, uy, 0.02 * u, ey - uy);
   ctx.fillStyle = '#C8233A'; ctx.beginPath(); ctx.ellipse(ux, uy, 0.24 * u, 0.09 * u, 0, Math.PI, 0); ctx.fill();
 }
+function drawUnicornio(o, z) {
+  shadowAt(o.x, o.y, z, 0.42, 0.2);
+  drawHouse({ x: o.x, y: o.y, roof: '#C9A2F2', h: 0.44, wall: '#FFE4F2' }, z);
+  const u = U(); const [hx, hy] = P(o.x - 0.31, o.y + 0.05, z + 0.66);   // cuerno dorado en el frontón
+  ctx.fillStyle = '#F5C542'; ctx.beginPath(); ctx.moveTo(hx - 0.05 * u, hy); ctx.lineTo(hx + 0.05 * u, hy); ctx.lineTo(hx + 0.02 * u, hy - 0.32 * u); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#E0A92A'; ctx.lineWidth = Math.max(1, u * 0.012); for (let k = 1; k < 4; k++) { ctx.beginPath(); ctx.moveTo(hx - 0.05 * u + k * 0.008 * u, hy - k * 0.07 * u); ctx.lineTo(hx + 0.05 * u - k * 0.004 * u, hy - k * 0.07 * u - 0.03 * u); ctx.stroke(); }
+  const cols = ['#FF8FB1', '#FFC861', '#8FE3B0', '#7FC8FF', '#B79BFF'];          // crin de colores por el tejado
+  for (let i = 0; i < 5; i++) { const [mx, my] = P(o.x - 0.2 + i * 0.12, o.y - 0.02, z + 0.72 - i * 0.01); ctx.fillStyle = cols[i]; ctx.beginPath(); ctx.arc(mx, my, 0.07 * u, 0, 7); ctx.fill(); }
+}
 function drawBasic(o, z) { shadowAt(o.x, o.y, z, 0.24, 0.12); drawHouse({ x: o.x, y: o.y, w: 0.34, d: 0.3, h: 0.24, hr: 0.16, roof: '#C9CFD6', wall: '#FBFBF7' }, z); }
 function drawCustom(o, z, t) {
   const f = o.forma || 'casa';
@@ -73,6 +82,7 @@ function drawCustom(o, z, t) {
   if (f === 'puerto') return drawPuerto(o, z);
   if (f === 'tienda') return drawShop({ x: o.x, y: o.y, col: o.color }, z);
   if (f === 'basica') return drawBasic(o, z);
+  if (f === 'unicornio') return drawUnicornio(o, z);
   shadowAt(o.x, o.y, z, 0.42, 0.2);
   drawHouse({ x: o.x, y: o.y, roof: o.color || C.coral, h: 0.42, wall: o.pared }, z);
   if (o.puerta) { const w = 0.62, d = 0.55, x = o.x - w / 2, Y = o.y - d / 2 + d; fillPoly(faceL(x + w * 0.38, x + w * 0.62, z, z + 0.42 * 0.62, Y), o.puerta); }
@@ -170,32 +180,38 @@ window.islandR = function (th, R, seed) {
   return (CITY.shape[i] * (1 - a) + CITY.shape[j] * a) * R / CITY.SR;
 };
 const ZONAS = {
-  com:  { sx: 1, sy: 1, p: 0.95, s: 0.42, b: 2, nombre: 'ZONA COMERCIAL', pad: '#EADCC4' },
-  resA: { sx: -1, sy: 1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DEL MUELLE', pad: '#E6EDD9' },
-  resB: { sx: 1, sy: -1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DEL FARO', pad: '#E6EDD9' },
+  com:  { sx: 1, sy: 1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DEL MUELLE', pad: '#E9E2D0', mix: true },
+  resA: { sx: -1, sy: 1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DE LAS PALMERAS', pad: '#E6EAD6', mix: true },
+  resB: { sx: 1, sy: -1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DEL FARO', pad: '#EDE3D6', mix: true },
   bas:  { sx: -1, sy: -1, p: 0.62, s: 0.36, b: 3, nombre: 'BARRIO NUEVO', pad: '#DFE5E8' },
 };
 const CITY_OFF = 0.8, AVE = 0.34;
+/* parcelas de una zona: en los barrios mixtos, manzanas desplazadas, algo de desorden y algún parque */
 function zonaLots(q, n) {
-  const out = [];
-  for (let k = 0; out.length < n; k++) {
-    const ring = []; for (let c = 0; c <= k; c++) for (let r = 0; r <= k; r++) if (Math.max(c, r) === k) ring.push([c, r]);
-    ring.sort((a, b) => (a[0] + a[1]) - (b[0] + b[1]) || a[1] - b[1]);
-    for (const [c, r] of ring) { if (out.length >= n) break;
-      out.push({ c, r, x: q.sx * (CITY_OFF + q.p / 2 + c * q.p + Math.floor(c / q.b) * q.s), y: q.sy * (CITY_OFF + q.p / 2 + r * q.p + Math.floor(r / q.b) * q.s) }); }
+  const cand = [];
+  for (let c = 0; c < 14; c++) for (let r = 0; r < 14; r++) {
+    const bi = Math.floor(c / q.b), bj = Math.floor(r / q.b);
+    let X = CITY_OFF + q.p / 2 + c * q.p + bi * q.s, Y = CITY_OFF + q.p / 2 + r * q.p + bj * q.s, park = false, d;
+    if (q.mix) {
+      X += (bj % 2) * q.p * 0.55; Y += (bi % 2) * q.p * 0.35;
+      X += (h2(c, r, 3) - 0.5) * 0.1; Y += (h2(c, r, 4) - 0.5) * 0.1;
+      park = (c + r > 1) && h2(c, r, 11) < 0.14;
+      d = Math.hypot(c, r * 1.15) + h2(c, r, 7) * 0.9;
+    } else d = Math.max(c, r) * 10 + c + r + r * 0.01;
+    cand.push({ c, r, bi, bj, x: q.sx * X, y: q.sy * Y, park, d });
   }
+  cand.sort((a, b) => a.d - b.d);
+  const out = []; let k = 0;
+  for (const l of cand) { if (k >= n) break; out.push(l); if (!l.park) k++; }
   return out;
 }
 function planCiudad(items, nBasic, seed) {
   CITY = null;
-  const esNeg = it => !['casa', 'arbol', 'cueva', 'basica'].includes(it.forma || 'casa') || it.tipo === 'negocio' && !it.forma;
-  const grupos = { com: [], resA: [], resB: [], bas: [] }; let puerto = null, nr = 0;
-  for (const it of items) {
-    if (it.forma === 'puerto') { puerto = it; continue; }
-    if (esNeg(it)) grupos.com.push(it); else grupos[(nr++ % 2) ? 'resB' : 'resA'].push(it);
-  }
-  const zonas = {};
-  for (const k of ['com', 'resA', 'resB']) { const L = zonaLots(ZONAS[k], grupos[k].length); grupos[k].forEach((it, i) => Object.assign(it, { x: L[i].x, y: L[i].y, zona: k })); zonas[k] = L; }
+  const grupos = { com: [], resA: [], resB: [] }; let puerto = null, nr = 0; const orden = ['com', 'resA', 'resB'];
+  for (const it of items) { if (it.forma === 'puerto') { puerto = it; continue; } grupos[orden[nr++ % 3]].push(it); }
+  const zonas = {}, parks = [];
+  for (const k of orden) { const L = zonaLots(ZONAS[k], grupos[k].length); let i = 0;
+    for (const l of L) { if (l.park) { parks.push(l); continue; } Object.assign(grupos[k][i++], { x: l.x, y: l.y, zona: k }); } zonas[k] = L; }
   const basics = zonaLots(ZONAS.bas, nBasic).map(l => ({ ...l, forma: 'basica', zona: 'bas' })); zonas.bas = basics;
   // forma de la isla: cubre todas las parcelas con margen
   const N = 180, need = new Float64Array(N);
@@ -210,7 +226,7 @@ function planCiudad(items, nBasic, seed) {
   for (let i = 0; i < N; i++) sh[i] *= 1 + 0.025 * Math.sin(i / N * 2 * Math.PI * 7 + seed);
   const SR = 5; CITY = { shape: sh, SR };
   if (puerto) { const r = islandR(0, SR, seed); Object.assign(puerto, { x: r - 0.35, y: 0.05, ang: 0, zona: 'puerto' }); }
-  return { items, basics, zonas, SR };
+  return { items, basics, zonas, parks, SR };
 }
 function rectW(x0, y0, x1, y1, z, col) { fillPoly([P(x0, y0, z), P(x1, y0, z), P(x1, y1, z), P(x0, y1, z)], col); }
 function drawCityGround(plan, zf, alpha = 1) {
@@ -218,12 +234,12 @@ function drawCityGround(plan, zf, alpha = 1) {
   const z = zf(0, 0) + 0.004, ASF = '#A9AFAB';
   // calles de cada zona (asfalto) y manzanas (aceras)
   for (const k in plan.zonas) { const q = ZONAS[k], L = plan.zonas[k]; if (!L.length) continue;
-    const xs = L.map(l => l.x), ys = L.map(l => l.y), e = q.p / 2 + q.s * 0.6;
-    rectW(Math.min(...xs) - e, Math.min(...ys) - e, Math.max(...xs) + e, Math.max(...ys) + e, z, ASF);
     const blocks = {}; for (const l of L) { const id = Math.floor(l.c / q.b) + ',' + Math.floor(l.r / q.b); (blocks[id] = blocks[id] || []).push(l); }
+    for (const id in blocks) { const B = blocks[id], bx = B.map(l => l.x), by = B.map(l => l.y), m = q.p / 2 - 0.03, e = m + q.s * 0.62;
+      rectW(Math.min(...bx) - e, Math.min(...by) - e, Math.max(...bx) + e, Math.max(...by) + e, z, ASF); }
     for (const id in blocks) { const B = blocks[id], bx = B.map(l => l.x), by = B.map(l => l.y), m = q.p / 2 - 0.03;
       rectW(Math.min(...bx) - m, Math.min(...by) - m, Math.max(...bx) + m, Math.max(...by) + m, z + 0.002, q.pad);
-      for (const l of B) rectW(l.x - q.p / 2 + 0.07, l.y - q.p / 2 + 0.07, l.x + q.p / 2 - 0.07, l.y + q.p / 2 - 0.07, z + 0.003, shade(q.pad, 0.25)); }
+      for (const l of B) rectW(l.x - q.p / 2 + 0.07, l.y - q.p / 2 + 0.07, l.x + q.p / 2 - 0.07, l.y + q.p / 2 - 0.07, z + 0.003, l.park ? '#8FD07A' : shade(q.pad, 0.25)); }
   }
   // avenidas en cruz y plaza
   const R = CITY ? CITY.SR : 3; const ye = islandR(Math.PI / 2, R, 0) - 0.2, yb = -islandR(-Math.PI / 2, R, 0) + 0.4, xe = islandR(0, R, 0) - 0.2, xb = -islandR(Math.PI, R, 0) + 0.4;
@@ -235,4 +251,6 @@ function drawCityGround(plan, zf, alpha = 1) {
   const pl2 = []; for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2; pl2.push(P(Math.cos(a) * 0.5, Math.sin(a) * 0.5, z + 0.008)); } fillPoly(pl2, '#E2D5BA');
   ctx.restore();
 }
+function drawParks(plan, zf, push) { for (const l of plan.parks || []) { const z = zf(l.x, l.y);
+  push(l.x + l.y - 0.2, () => drawTree({ x: l.x - 0.18, y: l.y - 0.1, s: 0.75 }, z)); push(l.x + l.y + 0.2, () => drawTree({ x: l.x + 0.15, y: l.y + 0.18, s: 0.6 }, z)); } }
 function zonaCentro(plan, k) { const L = plan.zonas[k]; if (!L || !L.length) return null; const xs = L.map(l => l.x), ys = L.map(l => l.y); return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2, top: { x: Math.min(...xs), y: Math.min(...ys) } }; }

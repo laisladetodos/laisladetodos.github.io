@@ -1,6 +1,6 @@
 {
  "dia": 4,
- "habitantes": 101,
+ "habitantes": 107,
  "radio": 3.6,
  "actualizado": "2026-11-06",
  "construcciones": [
@@ -289,7 +289,12 @@
    "y": 2.3246,
    "dia": 3,
    "color": "#8E6CC2"
+  },
+  {
+   "tipo": "casa",
+   "forma": "unicornio",
+   "dia": 3
   }
  ],
- "basicas": 72
+ "basicas": 77
 }
