@@ -12,7 +12,8 @@
    "dia": 1,
    "color": "#E76F8A",
    "usuario": "@celia.mart_",
-   "nombre": "La primera casa de la isla"
+   "nombre": "La primera casa de la isla",
+   "pared": "#FFD1E0"
   },
   {
    "tipo": "casa",

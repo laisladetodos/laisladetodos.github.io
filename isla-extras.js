@@ -76,7 +76,7 @@ function drawCustom(o, z, t) {
   if (f === 'pizzeria') return shopWithSign(o, z, '#2E9E5B', 'PIZZA', '#FFFFFF', '#FFFFFF');
   if (f === 'moviles') return shopWithSign(o, z, '#2E8FA8', 'MÓVILES', '#D9F2FA');
   if (f === 'comisaria') return shopWithSign(o, z, '#2B4C9B', 'POLICÍA', '#FFFFFF', '#EEF2FA');
-  if (f === 'perrera') { shadowAt(o.x, o.y, z, 0.42, 0.2); drawHouse({ x: o.x, y: o.y, roof: '#B5651D', h: 0.38, wall: '#FCEBD2' }, z); signBoard(o.x - 0.05, o.y + 0.4, z, '#FFFFFF', 'PERRITOS'); return; }
+  if (f === 'perrera') { shadowAt(o.x, o.y, z, 0.42, 0.2); drawHouse({ x: o.x, y: o.y, roof: '#B5651D', h: 0.38, wall: '#FCEBD2' }, z); return; }
   if (f === 'restaurante') return drawRestaurant(o, z);
   if (f === 'cueva') return drawCave(o, z);
   if (f === 'puerto') return drawPuerto(o, z);
