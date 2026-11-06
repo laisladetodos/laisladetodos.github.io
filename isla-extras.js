@@ -98,8 +98,8 @@ function drawCave(o, z) {
 }
 function drawPuerto(o, z) {
   const a = o.ang ?? 0, cx = Math.cos(a), cy = Math.sin(a), u = U();
-  for (let i = 0; i < 8; i++) { const k = i * 0.22; box(o.x + cx * k - 0.2, o.y + cy * k - 0.2, 0.4, 0.4, 0.06, z - 0.02, i % 2 ? '#B9824E' : C.wood, { tcol: i % 2 ? '#C9925E' : '#D6A06A' }); }
-  for (const s of [-1, 1]) { const k = 1.2; box(o.x + cx * k - cy * 0.17 * s - 0.03, o.y + cy * k + cx * 0.17 * s - 0.03, 0.06, 0.06, 0.22, z - 0.12, C.woodDark); }
+  for (let i = 0; i < 12; i++) { const k = i * 0.22; box(o.x + cx * k - 0.2, o.y + cy * k - 0.2, 0.4, 0.4, 0.06, z - 0.02, i % 2 ? '#B9824E' : C.wood, { tcol: i % 2 ? '#C9925E' : '#D6A06A' }); }
+  for (const s of [-1, 1]) for (const k of [1.2, 2.3]) { box(o.x + cx * k - cy * 0.17 * s - 0.03, o.y + cy * k + cx * 0.17 * s - 0.03, 0.06, 0.06, 0.22, z - 0.12, C.woodDark); }
   // barquita amarrada
   const bxw = o.x + cx * 0.75 - cy * 0.45, byw = o.y + cy * 0.75 + cx * 0.45; const [px, py] = P(bxw, byw, Z_SAND - 0.12);
   ctx.fillStyle = '#F2614C'; ctx.beginPath(); ctx.moveTo(px - 0.3 * u, py - 0.08 * u); ctx.lineTo(px + 0.3 * u, py - 0.08 * u); ctx.lineTo(px + 0.2 * u, py + 0.06 * u); ctx.lineTo(px - 0.22 * u, py + 0.06 * u); ctx.fill();
@@ -251,9 +251,12 @@ let CITY = null;            // { shape: Float64Array, SR }
 window.islandR = function (th, R, seed) {
   if (!CITY) return _islandR0(th, R, seed);
   const N = CITY.shape.length; let f = (((th / (2 * Math.PI)) % 1) + 1) % 1 * N;
-  const i = Math.floor(f) % N, j = (i + 1) % N, a = f - Math.floor(f);
-  return (CITY.shape[i] * (1 - a) + CITY.shape[j] * a) * R / CITY.SR;
+  const i = Math.floor(f) % N, j = (i + 1) % N, a = f - Math.floor(f), v = CITY.shape[i] * (1 - a) + CITY.shape[j] * a;
+  if (Math.abs(seed - (CITY.seed + 1.3)) < 1e-9) { const k = R / grassRad(CITY.SR); return Math.max(0.1, (v - 0.38) * k); }   // hierba casi hasta la orilla
+  return v * R / CITY.SR;
 };
+const FERRY_DX = 0.95, FERRY_DY = 1.95, PIER_LEN = 2.7;   // ferry atracado entero en el agua, junto al muelle largo
+function ferryXY(rc) { return [FERRY_DX, rc + FERRY_DY]; }
 const ZONAS = {
   com:  { sx: 1, sy: 1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DEL MUELLE', pad: '#E9E2D0', mix: true },
   resA: { sx: -1, sy: 1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DE LAS PALMERAS', pad: '#E6EAD6', mix: true },
@@ -268,8 +271,6 @@ function zonaLots(q, n) {
     const bi = Math.floor(c / q.b), bj = Math.floor(r / q.b);
     let X = CITY_OFF + q.p / 2 + c * q.p + bi * q.s, Y = CITY_OFF + q.p / 2 + r * q.p + bj * q.s, park = false, d;
     if (q.mix) {
-      X += (bj % 2) * q.p * 0.55; Y += (bi % 2) * q.p * 0.35;
-      X += (h2(c, r, 3) - 0.5) * 0.1; Y += (h2(c, r, 4) - 0.5) * 0.1;
       park = (c + r > 1) && h2(c, r, 11) < 0.14;
       d = Math.hypot(c, r * 1.15) + h2(c, r, 7) * 0.9;
     } else d = Math.max(c, r) * 10 + c + r + r * 0.01;
@@ -296,12 +297,26 @@ function planCiudad(items, nBasic, seed) {
   const pts = [];
   for (const k in zonas) { const q = ZONAS[k]; for (const l of zonas[k]) pts.push([l.x, l.y, q.p * 0.5 + 0.75]); }
   pts.push([0, 0, 1.4]);
+  // las calles que rodean cada barrio también tienen que quedar en tierra
+  for (const k in zonas) { const q = ZONAS[k], L = zonas[k]; if (!L.length) continue;
+    const mbi = Math.max(...L.map(l => Math.floor(l.c / q.b))), mbj = Math.max(...L.map(l => Math.floor(l.r / q.b)));
+    const far = n => CITY_OFF + n * q.b * q.p + (n - 0.5) * q.s + q.s / 2, Xm = far(mbi + 1), Ym = far(mbj + 1);
+    for (let f = 0; f <= 1.0001; f += 0.1) { pts.push([q.sx * Xm, q.sy * lerp(AVE, Ym, f), 0.55]); pts.push([q.sx * lerp(AVE, Xm, f), q.sy * Ym, 0.55]); } }
   for (const [x, y, m] of pts) { const d = Math.hypot(x, y), th = Math.atan2(y, x), w = Math.atan2(m, Math.max(0.01, d));
     for (let i = 0; i < N; i++) { const a = i / N * 2 * Math.PI; let dd = Math.abs(((a - th + Math.PI * 3) % (2 * Math.PI)) - Math.PI); if (dd < w) need[i] = Math.max(need[i], (d + m) * Math.cos(dd)); } }
   let sh = Float64Array.from(need);
   for (let pass = 0; pass < 4; pass++) { const nx = new Float64Array(N); for (let i = 0; i < N; i++) { let s = 0; for (let k = -4; k <= 4; k++) s += sh[(i + k + N) % N]; nx[i] = Math.max(need[i], s / 9); } sh = nx; }
-  for (let i = 0; i < N; i++) sh[i] *= 1 + 0.025 * Math.sin(i / N * 2 * Math.PI * 7 + seed);
-  const SR = 5; CITY = { shape: sh, SR };
+  // salientes y entrantes que aparecen según crece la ciudad (nunca delante del muelle)
+  const tot = items.length + nBasic, ang = i => i / N * 2 * Math.PI, dif = (a, b) => Math.abs(((a - b + Math.PI * 3) % (2 * Math.PI)) - Math.PI);
+  for (let k = 0; k < 7; k++) {
+    const a0 = h2(k, 17, 3) * 2 * Math.PI; if (dif(a0, Math.PI / 2) < 0.6) continue;
+    const umbral = k * 22; if (tot <= umbral) continue;
+    const amp = (k % 3 === 2 ? -0.9 : 1) * Math.min(3.2, 0.8 + (tot - umbral) / 35), w = 0.12 + h2(k, 5, 9) * 0.2;
+    for (let i = 0; i < N; i++) { const g = Math.exp(-Math.pow(dif(ang(i), a0) / w, 2)); sh[i] = Math.max(need[i] + 0.25, sh[i] + amp * g); }
+  }
+  for (let pass = 0; pass < 2; pass++) { const nx = new Float64Array(N); for (let i = 0; i < N; i++) nx[i] = Math.max(need[i] + 0.2, (sh[(i + N - 1) % N] + 2 * sh[i] + sh[(i + 1) % N]) / 4); sh = nx; }
+  for (let i = 0; i < N; i++) sh[i] *= 1 + 0.03 * Math.sin(ang(i) * 7 + seed) + 0.02 * Math.sin(ang(i) * 13 + seed * 2);
+  const SR = 5; CITY = { shape: sh, SR, seed };
   // el puerto es el muelle del ferry (uno solo); su dueño lo va mejorando como cualquier construcción
   if (puerto) { const r = islandR(Math.PI / 2, SR, seed); Object.assign(puerto, { x: 0, y: r - 0.3, ang: Math.PI / 2, zona: 'puerto' }); }
   return { items, basics, zonas, parks, SR };
@@ -309,18 +324,27 @@ function planCiudad(items, nBasic, seed) {
 function rectW(x0, y0, x1, y1, z, col) { fillPoly([P(x0, y0, z), P(x1, y0, z), P(x1, y1, z), P(x0, y1, z)], col); }
 function drawCityGround(plan, zf, alpha = 1) {
   if (alpha <= 0) return; ctx.save(); ctx.globalAlpha = alpha;
-  const z = zf(0, 0) + 0.004, ASF = '#A9AFAB';
-  // calles de cada zona (asfalto) y manzanas (aceras)
+  const z = zf(0, 0) + 0.004, ASF = '#A9AFAB', ACERA = '#D9D3C4', CAMINO = '#E2D9C6';
+  const W2 = (xa, xb, ya, yb, zz, col) => rectW(Math.min(xa, xb), Math.min(ya, yb), Math.max(xa, xb), Math.max(ya, yb), zz, col);
   for (const k in plan.zonas) { const q = ZONAS[k], L = plan.zonas[k]; if (!L.length) continue;
-    const blocks = {}; for (const l of L) { const id = Math.floor(l.c / q.b) + ',' + Math.floor(l.r / q.b); (blocks[id] = blocks[id] || []).push(l); }
-    for (const id in blocks) { const B = blocks[id], bx = B.map(l => l.x), by = B.map(l => l.y), m = q.p / 2 - 0.03, e = m + q.s * 0.62;
-      rectW(Math.min(...bx) - e, Math.min(...by) - e, Math.max(...bx) + e, Math.max(...by) + e, z, ASF); }
-    for (const id in blocks) { const B = blocks[id], bx = B.map(l => l.x), by = B.map(l => l.y), m = q.p / 2 - 0.03;
-      rectW(Math.min(...bx) - m, Math.min(...by) - m, Math.max(...bx) + m, Math.max(...by) + m, z + 0.002, q.pad);
-      for (const l of B) rectW(l.x - q.p / 2 + 0.07, l.y - q.p / 2 + 0.07, l.x + q.p / 2 - 0.07, l.y + q.p / 2 - 0.07, z + 0.003, l.park ? '#8FD07A' : shade(q.pad, 0.25)); }
+    const mbi = Math.max(...L.map(l => Math.floor(l.c / q.b))), mbj = Math.max(...L.map(l => Math.floor(l.r / q.b)));
+    const edge = n => CITY_OFF + n * q.b * q.p + (n - 0.5) * q.s;                  // centro de la calle n
+    const far = n => edge(n) + q.s / 2;
+    const Xmax = far(mbi + 1), Ymax = far(mbj + 1);
+    // calles: una entre cada fila y columna de manzanas, y otra rodeando el barrio
+    for (let n = 1; n <= mbi + 1; n++) { const c = edge(n); W2(q.sx * (c - q.s / 2), q.sx * (c + q.s / 2), q.sy * AVE, q.sy * Ymax, z, ASF); }
+    for (let n = 1; n <= mbj + 1; n++) { const c = edge(n); W2(q.sx * AVE, q.sx * Xmax, q.sy * (c - q.s / 2), q.sy * (c + q.s / 2), z, ASF); }
+    // caminito de cada casa hasta su calle
+    for (const l of L) { if (l.park) { W2(l.x - q.p * 0.45, l.x + q.p * 0.45, l.y - q.p * 0.45, l.y + q.p * 0.45, z + 0.001, '#7FC56C'); continue; }
+      const h = q.p / 2 + 0.02, wv = q.p * 0.14;
+      if (l.face === 'S') W2(l.x - wv, l.x + wv, l.y + 0.12, l.y + h, z + 0.002, CAMINO);
+      if (l.face === 'N') W2(l.x - wv, l.x + wv, l.y - 0.12, l.y - h, z + 0.002, CAMINO);
+      if (l.face === 'E') W2(l.x + 0.12, l.x + h, l.y - wv, l.y + wv, z + 0.002, CAMINO);
+      if (l.face === 'W') W2(l.x - 0.12, l.x - h, l.y - wv, l.y + wv, z + 0.002, CAMINO); }
   }
-  // avenidas en cruz y plaza
-  const R = CITY ? CITY.SR : 3; const ye = islandR(Math.PI / 2, R, 0) - 0.2, yb = -islandR(-Math.PI / 2, R, 0) + 0.4, xe = islandR(0, R, 0) - 0.2, xb = -islandR(Math.PI, R, 0) + 0.4;
+  // avenidas en cruz (con aceras) y plaza
+  const R = CITY ? CITY.SR : 3; const ye = islandR(Math.PI / 2, R, 0) - 0.1, yb = -islandR(-Math.PI / 2, R, 0) + 0.35, xe = islandR(0, R, 0) - 0.35, xb = -islandR(Math.PI, R, 0) + 0.35;
+  rectW(-AVE - 0.08, yb, AVE + 0.08, ye, z + 0.004, ACERA); rectW(xb, -AVE - 0.08, xe, AVE + 0.08, z + 0.004, ACERA);
   rectW(-AVE, yb, AVE, ye, z + 0.005, ASF); rectW(xb, -AVE, xe, AVE, z + 0.005, ASF);
   ctx.setLineDash([U() * 0.12, U() * 0.12]); ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = Math.max(1, U() * 0.025);
   for (const [a, b] of [[[0, 0.9], [0, ye]], [[0, -0.9], [0, yb]], [[0.9, 0], [xe, 0]], [[-0.9, 0], [xb, 0]]]) { ctx.beginPath(); const p0 = P(a[0], a[1], z + 0.006), p1 = P(b[0], b[1], z + 0.006); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }

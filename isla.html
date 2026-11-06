@@ -116,7 +116,14 @@ function dibujarDetalle(o, t) {
 
 // cámara
 cam.x = 0; cam.y = 0.2; cam.zoom = 1;
-function encuadre() { cam.u = Math.min(W / (R * 2.83 + 1.4), H / (R * 1.6 + 3)); }
+function encuadre() {
+  if (!CITY) { cam.u = Math.min(W / (R * 2.83 + 1.4), H / (R * 1.6 + 3)); return; }
+  // encuadra la forma real de la isla (proyección isométrica: horizontal x−y, vertical (x+y)/2)
+  const N = CITY.shape.length; let a0 = 1e9, a1 = -1e9, b0 = 1e9, b1 = -1e9, mx = 0, my = 0;
+  for (let i = 0; i < N; i++) { const th = i / N * 2 * Math.PI, r = CITY.shape[i], x = Math.cos(th) * r, y = Math.sin(th) * r; a0 = Math.min(a0, x - y); a1 = Math.max(a1, x - y); b0 = Math.min(b0, (x + y) / 2); b1 = Math.max(b1, (x + y) / 2); }
+  const cxw = (a1 + a0) / 2, cyw = (b1 + b0); cam.x = (cxw + cyw) / 2; cam.y = (cyw - cxw) / 2;
+  cam.u = Math.min(W / ((a1 - a0) + 0.6), H / ((b1 - b0) + 1.6));
+}
 function resize() {
   W = Math.round(innerWidth * dpr); H = Math.round(innerHeight * dpr);
   cv.width = W; cv.height = H; cam.cx = W / 2; cam.cy = H * 0.54; encuadre();
@@ -128,7 +135,7 @@ function frame(ts) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   drawSea(t, R); drawShore(R, SEED, t); if (SOLO_ARENA()) extrude(islandPts(R, SEED), 0, Z_SAND, C.sand, C.sandSide); else drawIsland(R, SEED);
   const rc = islandR(Math.PI / 2, R, SEED);
-  drawPier(0, rc - 0.35, 1.9, Z_SAND);
+  drawPier(0, rc - 0.35, PIER_LEN, Z_SAND);
   if (PLAN) drawCityGround(PLAN, (x, y) => SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED));
   const list = [{ d: -0.75, f: () => drawObj({ type: 'palm', x: 0, y: 0, s: 1.1, z: SOLO_ARENA() ? Z_SAND : groundZ(0, 0, R, SEED) }, t, R, SEED) }];
   if (PLAN) drawParks(PLAN, (x, y) => SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED), (d, f) => list.push({ d, f }));
@@ -140,7 +147,7 @@ function frame(ts) {
     const th = Math.atan2(y, x), lim = islandR(th, R, SEED) - 0.3; if (Math.hypot(x, y) > lim) { x *= lim / Math.hypot(x, y); y *= lim / Math.hypot(x, y); }
     list.push({ d: x + y + 0.01, f: () => drawPerson(x, y, groundZ(x, y, R, SEED), p.col, t, 1.1, t * 8 + k) });
   });
-  list.push({ d: 0.72 + rc + 0.85, f: () => drawFerry(0.72, rc + 1.15, Math.sin(t * 2.2) * 0.015, t) });
+  { const [fx, fy] = ferryXY(rc); list.push({ d: fx + fy - 0.3, f: () => drawFerry(fx, fy, Math.sin(t * 2.2) * 0.015, t) }); }
   // nombres integrados: una placa pequeña clavada delante del edificio (se lee al acercar; no tapa nada)
   for (const o of objs) if (o.data.usuario) list.push({ d: o.x + o.y + 0.42, f: () => placa(o) });
   list.sort((a, b) => a.d - b.d); for (const o of list) o.f();
