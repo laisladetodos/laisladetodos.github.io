@@ -145,7 +145,7 @@ function frame(ts) {
   // nombres de los que salieron con nombre
   let ni = 0;
   for (const o of objs) if (o.data.usuario) {
-    const [sx, sy] = P(o.x, o.y, o.z); const lift = o.type === 'treehouse' ? 1.75 : 1.05; ni++;
+    const [sx, sy] = P(o.x, o.y, o.z); const fm = o.data.forma; const lift = fm === 'arbol' ? 1.6 : fm === 'puerto' ? 0.5 : fm === 'cueva' ? 0.8 : 0.95; ni++;
     tag(sx, sy - lift * U(), o.data.usuario, { t: t + o.x, px: Math.max(14, Math.min(30, U() * 0.22)), bg: o === selected ? '#FFFFFF' : C.yellow });
   }
   if (selected && !selected.data.usuario) { const [sx, sy] = P(selected.x, selected.y, selected.z); tag(sx, sy - 0.75 * U(), '●', { t, px: 18, bg: '#FFFFFF' }); }

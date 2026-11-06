@@ -225,7 +225,8 @@ function planCiudad(items, nBasic, seed) {
   for (let pass = 0; pass < 4; pass++) { const nx = new Float64Array(N); for (let i = 0; i < N; i++) { let s = 0; for (let k = -4; k <= 4; k++) s += sh[(i + k + N) % N]; nx[i] = Math.max(need[i], s / 9); } sh = nx; }
   for (let i = 0; i < N; i++) sh[i] *= 1 + 0.025 * Math.sin(i / N * 2 * Math.PI * 7 + seed);
   const SR = 5; CITY = { shape: sh, SR };
-  if (puerto) { const r = islandR(0, SR, seed); Object.assign(puerto, { x: r - 0.35, y: 0.05, ang: 0, zona: 'puerto' }); }
+  // el puerto es el muelle del ferry (uno solo); su dueño lo va mejorando como cualquier construcción
+  if (puerto) { const r = islandR(Math.PI / 2, SR, seed); Object.assign(puerto, { x: 0, y: r - 0.3, ang: Math.PI / 2, zona: 'puerto' }); }
   return { items, basics, zonas, parks, SR };
 }
 function rectW(x0, y0, x1, y1, z, col) { fillPoly([P(x0, y0, z), P(x1, y0, z), P(x1, y1, z), P(x0, y1, z)], col); }
