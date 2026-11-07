@@ -305,7 +305,7 @@ function planCiudad(items, nBasic, seed) {
   for (const k in zonas) { const q = ZONAS[k], L = zonas[k]; if (!L.length) continue;
     const mbi = Math.max(...L.map(l => Math.floor(l.c / q.b))), mbj = Math.max(...L.map(l => Math.floor(l.r / q.b)));
     const far = n => CITY_OFF + n * q.b * q.p + (n - 0.5) * q.s + q.s / 2, Xm = far(mbi + 1), Ym = far(mbj + 1);
-    for (let f = 0; f <= 1.0001; f += 0.1) { pts.push([q.sx * Xm, q.sy * lerp(AVE, Ym, f), 0.55]); pts.push([q.sx * lerp(AVE, Xm, f), q.sy * Ym, 0.55]); } }
+    for (let f = 0; f <= 1.0001; f += 0.05) { pts.push([q.sx * Xm, q.sy * lerp(AVE, Ym, f), 0.95]); pts.push([q.sx * lerp(AVE, Xm, f), q.sy * Ym, 0.95]); } pts.push([q.sx * Xm, q.sy * Ym, 1.2]); }
   for (const [x, y, m] of pts) { const d = Math.hypot(x, y), th = Math.atan2(y, x), w = Math.atan2(m, Math.max(0.01, d));
     for (let i = 0; i < N; i++) { const a = i / N * 2 * Math.PI; let dd = Math.abs(((a - th + Math.PI * 3) % (2 * Math.PI)) - Math.PI); if (dd < w) need[i] = Math.max(need[i], (d + m) * Math.cos(dd)); } }
   let sh = Float64Array.from(need);
@@ -348,11 +348,12 @@ function drawCityGround(plan, zf, alpha = 1) {
     for (let n = 1; n <= mbj + 1; n++) { const c = edge(n); W2(q.sx * AVE, q.sx * Xmax, q.sy * (c - q.s / 2), q.sy * (c + q.s / 2), z, ASF); }
     // caminito de cada casa hasta su calle
     for (const l of L) { if (l.park) { W2(l.x - q.p * 0.45, l.x + q.p * 0.45, l.y - q.p * 0.45, l.y + q.p * 0.45, z + 0.001, '#7FC56C'); continue; }
-      const h = q.p / 2 + 0.02, wv = q.p * 0.14;
-      if (l.face === 'S') W2(l.x - wv, l.x + wv, l.y + 0.12, l.y + h, z + 0.002, CAMINO);
-      if (l.face === 'N') W2(l.x - wv, l.x + wv, l.y - 0.12, l.y - h, z + 0.002, CAMINO);
-      if (l.face === 'E') W2(l.x + 0.12, l.x + h, l.y - wv, l.y + wv, z + 0.002, CAMINO);
-      if (l.face === 'W') W2(l.x - 0.12, l.x - h, l.y - wv, l.y + wv, z + 0.002, CAMINO); }
+      // el camino llega siempre hasta el asfalto (calle del barrio o avenida)
+      const h = q.p / 2 + 0.03, wv = q.p * 0.14, dir = { S: [0, 1], N: [0, -1], E: [1, 0], W: [-1, 0] }[l.face];
+      if (dir[1]) { const haciaCentro = Math.sign(dir[1]) !== Math.sign(l.y), primera = Math.floor(l.r / q.b) === 0;
+        const yEnd = haciaCentro && primera ? Math.sign(l.y) * (AVE + 0.05) : l.y + dir[1] * h; W2(l.x - wv, l.x + wv, l.y + dir[1] * 0.12, yEnd, z + 0.002, CAMINO); }
+      else { const haciaCentro = Math.sign(dir[0]) !== Math.sign(l.x), primera = Math.floor(l.c / q.b) === 0;
+        const xEnd = haciaCentro && primera ? Math.sign(l.x) * (AVE + 0.05) : l.x + dir[0] * h; W2(l.x + dir[0] * 0.12, xEnd, l.y - wv, l.y + wv, z + 0.002, CAMINO); } }
   }
   // avenidas en cruz (con aceras) y plaza
   const R = CITY ? CITY.SR : 3; const ext = { px: 1.2, nx: 1.2, ny: 1.2 };
