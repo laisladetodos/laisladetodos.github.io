@@ -55,7 +55,7 @@ a.btn:focus-visible,button:focus-visible{outline:3px solid var(--yellow);outline
   <div class="meta" id="cMeta"></div>
 </div>
 <script src="isla-lib.js?v=1794062095"></script>
-<script src="isla-extras.js?v=1794062095"></script>
+<script src="isla-extras.js?v=1794062583"></script>
 <script>
 'use strict';
 const SEED = 1.7;
@@ -108,8 +108,8 @@ function dibujarEdificio(o, t) {
   const c = o.data, forma = c.forma || (c.tipo === 'negocio' ? 'tienda' : 'casa');
   drawCustom({ ...c, x: o.x, y: o.y, face: o.face, ang: (o.ang || 0) + VIEW_ROT * Math.PI / 2, forma, color: c.color || o.roof || o.col }, forma === 'puerto' ? Z_SAND : o.z, t);
 }
-function dibujarDetalle(o, t) {
-  const det = o.data.detalles || (o.data.dibujo_detalle ? [o.data.dibujo_detalle] : []); if (det.length) return drawDetails({ x: o.x, y: o.y, face: o.face, det }, o.z, t);
+function dibujarDetalle(o, t, push) {
+  const det = o.data.detalles || (o.data.dibujo_detalle ? [o.data.dibujo_detalle] : []); if (det.length) return drawDetails({ x: o.x, y: o.y, face: o.face, det, forma: o.data.forma }, o.z, t, push);
   const d = null, z = o.z; if (!d) return;
   if (d === 'gato') drawCat(o.x - 0.15, o.y + 0.5, z, t, 1.2);
   if (d === 'gatos') { drawCat(o.x + 0.45, o.y - 0.12, z, t, 1.25, '#4A4A4A'); drawCat(o.x + 0.45, o.y + 0.18, z, t + 1, 1.25); }
@@ -143,7 +143,7 @@ function frame(ts) {
   if (PLAN) drawCityGround(PLAN, (x, y) => SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED));
   const list = [{ d: -0.75, f: () => drawObj({ type: 'palm', x: 0, y: 0, s: 1.1, z: SOLO_ARENA() ? Z_SAND : groundZ(0, 0, R, SEED) }, t, R, SEED) }];
   if (PLAN) drawParks(PLAN, (x, y) => SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED), (d, f) => list.push({ d, f }));
-  for (const o of objs) { list.push({ d: o.x + o.y, f: () => dibujarEdificio(o, t) }); if (o.data.dibujo_detalle || o.data.detalles) list.push({ d: 100, f: () => dibujarDetalle(o, t) }); }
+  for (const o of objs) { list.push({ d: o.x + o.y, f: () => dibujarEdificio(o, t) }); if (o.data.dibujo_detalle || o.data.detalles) dibujarDetalle(o, t, (d, f) => list.push({ d, f })); }
   people.forEach((p, k) => {
     if (k >= 12) return;
     const a = p.a + t * p.sp, r = p.r * (0.85 + 0.15 * Math.sin(t * 0.3 + k));

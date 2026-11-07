@@ -69,7 +69,7 @@ function drawTreeHouse(o, z) {
   box(x - 0.36, y - 0.36, 0.72, 0.72, 0.06, z + 0.6, C.wood, { tcol: '#C98C57' });
   const [lx, ly] = P(x, y, z + 0.95); const u = U();
   ctx.fillStyle = '#3E9A4F'; for (const [dx, dy, r] of [[-0.35, 0.05, 0.3], [0.35, 0.0, 0.3], [0, -0.25, 0.36]]) { ctx.beginPath(); ctx.arc(lx + dx * u, ly + dy * u - 0.25 * u, r * u, 0, 7); ctx.fill(); }
-  drawHouse({ x, y, w: 0.46, d: 0.42, h: 0.3, hr: 0.22, roof: '#4FA36B', wall: '#E8C9A0' }, z + 0.66);
+  drawHouse({ x, y, w: 0.46, d: 0.42, h: 0.3, hr: 0.22, roof: '#C2502E', wall: '#E8C9A0' }, z + 0.66);
   const a = P(x - 0.1, y + 0.45, z), b = P(x - 0.1, y + 0.36, z + 0.62); ctx.strokeStyle = C.woodDark; ctx.lineWidth = Math.max(2, u * 0.025);
   for (const off of [-0.06, 0.06]) { ctx.beginPath(); ctx.moveTo(a[0] + off * u, a[1]); ctx.lineTo(b[0] + off * u, b[1]); ctx.stroke(); }
   for (let k = 1; k < 6; k++) { const q = k / 6; ctx.beginPath(); ctx.moveTo(lerp(a[0], b[0], q) - 0.06 * u, lerp(a[1], b[1], q)); ctx.lineTo(lerp(a[0], b[0], q) + 0.06 * u, lerp(a[1], b[1], q)); ctx.stroke(); }
@@ -105,12 +105,7 @@ function drawPuerto(o, z) {
   for (const s of [-1, 1]) for (const k of [1.2, 2.3]) { box(o.x + cx * k - cy * 0.17 * s - 0.03, o.y + cy * k + cx * 0.17 * s - 0.03, 0.06, 0.06, 0.22, z - 0.12, C.woodDark); }
   const [sx, sy] = P(o.x - cy * 0.25, o.y + cx * 0.25, z); signBoard(o.x - cy * 0.25, o.y + cx * 0.25, z, '#FFFFFF', 'PUERTO');
 }
-function drawRestaurant(o, z) {
-  shopWithSign(o, z, o.color || '#C8233A', 'RESTAURANTE', '#FFFFFF');
-  const tx = o.x + 0.15, ty = o.y + 0.5; box(tx - 0.08, ty - 0.08, 0.16, 0.16, 0.14, z, '#FFFFFF');
-  const [ux, uy] = P(tx, ty, z + 0.42); const u = U(); ctx.fillStyle = C.woodDark; const [ex, ey] = P(tx, ty, z + 0.14); ctx.fillRect(ux - 0.01 * u, uy, 0.02 * u, ey - uy);
-  ctx.fillStyle = '#C8233A'; ctx.beginPath(); ctx.ellipse(ux, uy, 0.24 * u, 0.09 * u, 0, Math.PI, 0); ctx.fill();
-}
+function drawRestaurant(o, z) { const fc = o.face || 'S', atras = fc === 'N' || fc === 'W'; if (atras) drawTerrazaF(o, z, o.color || '#C8233A'); shopWithSign(o, z, o.color || '#C8233A', 'RESTAURANTE', '#FFFFFF'); if (!atras) drawTerrazaF(o, z, o.color || '#C8233A'); }
 function drawUnicornio(o, z) {
   shadowAt(o.x, o.y, z, 0.42, 0.2);
   drawHouse({ x: o.x, y: o.y, roof: '#C9A2F2', h: 0.44, wall: '#FFE4F2' }, z);
@@ -129,13 +124,18 @@ function drawTigre(o, z) {
   for (const q of [0.2, 0.5, 0.8]) { const a = P(X, o.y - d / 2 + d * q, z + 0.4), b = P(X, o.y - d / 2 + d * q + 0.05, z + 0.2); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
   for (const dx of [-0.2, 0.2]) { const [ex, ey] = P(o.x + dx, o.y, z + 0.78); ctx.fillStyle = '#F29B38'; ctx.beginPath(); ctx.moveTo(ex - 0.07 * u, ey); ctx.lineTo(ex, ey - 0.13 * u); ctx.lineTo(ex + 0.07 * u, ey); ctx.fill(); ctx.fillStyle = '#2B2B2B'; ctx.beginPath(); ctx.moveTo(ex - 0.03 * u, ey); ctx.lineTo(ex, ey - 0.07 * u); ctx.lineTo(ex + 0.03 * u, ey); ctx.fill(); }
 }
-function drawTorre(o, z) {
+function drawTorre(o, z) {   // torre de control: fuste de piedra y cabina acristalada arriba
   shadowAt(o.x, o.y, z, 0.32, 0.16);
-  box(o.x - 0.2, o.y - 0.2, 0.4, 0.4, 0.95, z, '#9C9A8E', { tcol: '#B5B3A6' });
-  for (let i = -2; i <= 2; i += 2) box(o.x - 0.24 + (i + 2) * 0.1, o.y - 0.24, 0.1, 0.48, 0.1, z + 0.95, '#8A887C');
-  fillPoly(faceL(o.x - 0.07, o.x + 0.07, z, z + 0.26, o.y + 0.2), C.woodDark);
-  fillPoly(faceL(o.x - 0.06, o.x + 0.06, z + 0.55, z + 0.72, o.y + 0.2), '#2A2A2A');
-  const [fx, fy] = P(o.x + 0.12, o.y - 0.1, z + 1.05); const u = U(); ctx.fillStyle = '#DDD'; ctx.fillRect(fx - 0.01 * u, fy - 0.35 * u, 0.02 * u, 0.35 * u); ctx.fillStyle = '#3E6B3E'; ctx.fillRect(fx + 0.01 * u, fy - 0.35 * u, 0.2 * u, 0.12 * u);
+  box(o.x - 0.17, o.y - 0.17, 0.34, 0.34, 0.9, z, '#A9A699', { tcol: '#BDBAAE' });
+  for (const zz of [0.3, 0.6]) box(o.x - 0.18, o.y - 0.18, 0.36, 0.36, 0.03, z + zz, '#8E8B80');
+  fillPoly(faceL(o.x - 0.06, o.x + 0.06, z, z + 0.22, o.y + 0.17), C.woodDark);
+  for (const zz of [0.4, 0.68]) { fillPoly(faceL(o.x - 0.04, o.x + 0.04, z + zz, z + zz + 0.1, o.y + 0.17), '#3B4A55'); fillPoly(faceR(o.y - 0.04, o.y + 0.04, z + zz, z + zz + 0.1, o.x + 0.17), '#33424C'); }
+  box(o.x - 0.26, o.y - 0.26, 0.52, 0.52, 0.04, z + 0.9, '#7E7B72');
+  box(o.x - 0.22, o.y - 0.22, 0.44, 0.44, 0.2, z + 0.94, '#9FD8EE', { tcol: '#3A3A3A' });
+  for (const q of [0.25, 0.5, 0.75]) { fillPoly(faceL(o.x - 0.22 + 0.44 * q - 0.008, o.x - 0.22 + 0.44 * q + 0.008, z + 0.94, z + 1.14, o.y + 0.22), '#3A3A3A'); fillPoly(faceR(o.y - 0.22 + 0.44 * q - 0.008, o.y - 0.22 + 0.44 * q + 0.008, z + 0.94, z + 1.14, o.x + 0.22), '#3A3A3A'); }
+  box(o.x - 0.25, o.y - 0.25, 0.5, 0.5, 0.05, z + 1.14, '#D9D6CC');
+  const [ax, ay] = P(o.x, o.y, z + 1.19); const u = U(); ctx.fillStyle = '#666'; ctx.fillRect(ax - 0.008 * u, ay - 0.22 * u, 0.016 * u, 0.22 * u);
+  ctx.fillStyle = '#E8384F'; ctx.beginPath(); ctx.arc(ax, ay - 0.23 * u, 0.025 * u, 0, 7); ctx.fill();
 }
 function drawHuerto(o, z, t) {
   const g = 0.42; fillPoly([P(o.x - g, o.y - g, z + 0.006), P(o.x + g, o.y - g, z + 0.006), P(o.x + g, o.y + g, z + 0.006), P(o.x - g, o.y + g, z + 0.006)], '#9A6B3F');
@@ -161,10 +161,6 @@ function drawMoto(x, y, z) { const [bx, by] = P(x, y, z); const u = U();
   ctx.fillStyle = '#222'; for (const dx of [-0.08, 0.08]) { ctx.beginPath(); ctx.arc(bx + dx * u, by - 0.04 * u, 0.04 * u, 0, 7); ctx.fill(); }
   ctx.fillStyle = '#D7263D'; ctx.beginPath(); ctx.moveTo(bx - 0.09 * u, by - 0.07 * u); ctx.lineTo(bx + 0.06 * u, by - 0.07 * u); ctx.lineTo(bx + 0.08 * u, by - 0.13 * u); ctx.lineTo(bx - 0.05 * u, by - 0.12 * u); ctx.fill();
   ctx.fillStyle = '#FFFFFF'; ctx.fillRect(bx - 0.12 * u, by - 0.2 * u, 0.09 * u, 0.08 * u); ctx.fillStyle = '#D7263D'; ctx.fillRect(bx - 0.12 * u, by - 0.2 * u, 0.09 * u, 0.02 * u); }
-function drawTerraza(o, z) { const fc = o.face || 'S', off = { S: [0, 0.42], N: [0, -0.42], E: [0.42, 0], W: [-0.42, 0] }[fc];
-  for (const k of [-1, 1]) { const tx = o.x + off[0] + (off[1] ? k * 0.2 : 0), ty = o.y + off[1] + (off[0] ? k * 0.2 : 0);
-    box(tx - 0.05, ty - 0.05, 0.1, 0.1, 0.1, z, '#FFFFFF'); const [ux, uy] = P(tx, ty, z + 0.34), [ex, ey] = P(tx, ty, z + 0.1); const u = U();
-    ctx.fillStyle = C.woodDark; ctx.fillRect(ux - 0.008 * u, uy, 0.016 * u, ey - uy); ctx.fillStyle = k > 0 ? '#2E8FA8' : '#FFFFFF'; ctx.beginPath(); ctx.ellipse(ux, uy, 0.15 * u, 0.06 * u, 0, Math.PI, 0); ctx.fill(); } }
 function drawBasic(o, z) { shadowAt(o.x, o.y, z, 0.24, 0.12); drawHouseF({ x: o.x, y: o.y, w: 0.34, d: 0.3, h: 0.24, hr: 0.16, roof: '#C9CFD6', wall: '#FBFBF7' }, z, o.face); }
 function fenceLine(x0, y0, x1, y1, z, gap) {   // valla blanca de madera
   const n = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0) / 0.09)), u = U(), h = 0.13;
@@ -247,8 +243,9 @@ function drawCobaya(x, y, z, t, s = 1, body = '#B8763A') {
 }
 function drawFlag(x, y, z, t, kind) {
   const [bx, by] = P(x, y, z); const u = U();
-  ctx.fillStyle = '#DDDDDD'; ctx.fillRect(bx - 0.012 * u, by - 0.75 * u, 0.024 * u, 0.75 * u);
-  const fw = 0.36 * u, fh = 0.22 * u, x0 = bx + 0.012 * u, y0 = by - 0.74 * u;
+  ctx.fillStyle = '#DDDDDD'; ctx.fillRect(bx - 0.01 * u, by - 0.42 * u, 0.02 * u, 0.42 * u);
+  ctx.fillStyle = '#F2C94C'; ctx.beginPath(); ctx.arc(bx, by - 0.43 * u, 0.018 * u, 0, 7); ctx.fill();
+  const fw = 0.26 * u, fh = 0.16 * u, x0 = bx + 0.01 * u, y0 = by - 0.41 * u;
   const wv = (q) => Math.sin(t * 4 + q * 3) * 0.015 * u;
   const quad = (q0, q1, r0, r1, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x0 + fw * q0, y0 + fh * r0 + wv(q0)); ctx.lineTo(x0 + fw * q1, y0 + fh * r0 + wv(q1)); ctx.lineTo(x0 + fw * q1, y0 + fh * r1 + wv(q1)); ctx.lineTo(x0 + fw * q0, y0 + fh * r1 + wv(q0)); ctx.closePath(); ctx.fill(); };
   if (kind === 'peru') { quad(0, 1 / 3, 0, 1, '#D91023'); quad(1 / 3, 2 / 3, 0, 1, '#FFFFFF'); quad(2 / 3, 1, 0, 1, '#D91023'); }
@@ -260,37 +257,73 @@ function drawFlag(x, y, z, t, kind) {
 }
 function drawFlagPeru(x, y, z, t) { drawFlag(x, y, z, t, 'peru'); }
 function drawHamster(x, y, z, t, s = 1) { drawCobaya(x, y, z, t, s * 0.8, '#E59A4C'); }
-function drawHeart(o, z) { const w = 0.62, d = 0.55; const [hx, hy] = P(o.x + w * 0.2, o.y + d / 2, z + 0.24); const u = U(); const r = 0.05 * u;
+function drawHeart(o, z) { const fc = o.face || 'S', [hx, hy] = (fc === 'E' || fc === 'W') ? P(o.x + 0.275, o.y - 0.12, z + 0.24) : P(o.x + 0.12, o.y + 0.275, z + 0.24); const u = U(); const r = 0.05 * u;
   ctx.fillStyle = '#E8384F'; ctx.beginPath(); ctx.moveTo(hx, hy + r * 1.4); ctx.bezierCurveTo(hx - r * 2.2, hy - r * 0.2, hx - r * 0.9, hy - r * 1.9, hx, hy - r * 0.6); ctx.bezierCurveTo(hx + r * 0.9, hy - r * 1.9, hx + r * 2.2, hy - r * 0.2, hx, hy + r * 1.4); ctx.fill(); }
-function drawFlowers(o, z) { const cols = ['#F2614C', '#FFC83D', '#E76F8A', '#B66DFF'];
-  for (let i = 0; i < 8; i++) { const [fx, fy] = P(o.x - 0.3 + i * 0.085, o.y + 0.34, z); ctx.fillStyle = '#3E9A4F'; ctx.fillRect(fx - 1, fy - U() * 0.06, 2, U() * 0.06); ctx.fillStyle = cols[i % 4]; ctx.beginPath(); ctx.arc(fx, fy - U() * 0.07, Math.max(2, U() * 0.028), 0, 7); ctx.fill(); } }
+function drawFlowers(o, z, vis = 1) { const cols = ['#F2614C', '#FFC83D', '#E76F8A', '#B66DFF'];
+  for (let i = 0; i < 8; i++) { const [x, y] = enFrente(o, 0.34 * vis, -0.3 + i * 0.085); if (Math.abs(-0.3 + i * 0.085) < 0.1) continue; const [fx, fy] = P(x, y, z); ctx.fillStyle = '#3E9A4F'; ctx.fillRect(fx - 1, fy - U() * 0.06, 2, U() * 0.06); ctx.fillStyle = cols[i % 4]; ctx.beginPath(); ctx.arc(fx, fy - U() * 0.07, Math.max(2, U() * 0.028), 0, 7); ctx.fill(); } }
 function drawPool(o, z) { const x = o.x + 0.62, y = o.y - 0.05, w = 0.42, d = 0.5;
   fillPoly([P(x - w / 2, y - d / 2, z + 0.01), P(x + w / 2, y - d / 2, z + 0.01), P(x + w / 2, y + d / 2, z + 0.01), P(x - w / 2, y + d / 2, z + 0.01)], '#FFFFFF');
   fillPoly([P(x - w / 2 + 0.05, y - d / 2 + 0.05, z + 0.012), P(x + w / 2 - 0.05, y - d / 2 + 0.05, z + 0.012), P(x + w / 2 - 0.05, y + d / 2 - 0.05, z + 0.012), P(x - w / 2 + 0.05, y + d / 2 - 0.05, z + 0.012)], '#4FC3E8'); }
-function drawDetails(o, z, t) {
-  const det = o.det || []; let flags = 0;
+/* --- orientación de los detalles: delante (f) y a lo largo de la fachada (s) según hacia dónde mira el edificio --- */
+const FRENTE = { S: [[0, 1], [1, 0]], N: [[0, -1], [-1, 0]], E: [[1, 0], [0, -1]], W: [[-1, 0], [0, 1]] };
+function enFrente(o, a, b) { const [f, s] = FRENTE[o.face || 'S']; return [o.x + f[0] * a + s[0] * b, o.y + f[1] * a + s[1] * b]; }
+function alturaTejado(o) {   // [altura de la cumbrera, ¿tejado plano?]
+  const f = o.forma || 'casa';
+  if (['tienda'].includes(f)) return [0.48, true];
+  if (['bar'].includes(f)) return [0.44, true];
+  if (['veterinario'].includes(f)) return [0.38, true];
+  if (['kebab', 'pizzeria', 'moviles', 'comisaria', 'restaurante', 'lavanderia', 'super', 'peluqueria'].includes(f)) return [0.42, true];
+  if (f === 'perrera') return [0.68, false];
+  if (f === 'tigre' || f === 'unicornio') return [0.74, false];
+  if ((o.det || []).includes('piscina')) return [0.64, false];
+  return [0.72, false];
+}
+function drawTerrazaF(o, z, col) {   // mesas con sombrilla delante del local, en el suelo
+  for (const k of [-1, 1]) {
+    const [tx, ty] = enFrente(o, 0.5, k * 0.2), u = U();
+    for (const c of [-1, 1]) { const [cx, cy] = enFrente({ ...o, x: tx, y: ty }, 0, c * 0.08); box(cx - 0.025, cy - 0.025, 0.05, 0.05, 0.06, z, C.woodDark); }
+    const [lx, ly] = P(tx, ty, z), [mx, my] = P(tx, ty, z + 0.1), [px, py] = P(tx, ty, z + 0.3);
+    ctx.fillStyle = '#E6E1D8'; ctx.fillRect(lx - 0.006 * u, my, 0.012 * u, ly - my);
+    ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.ellipse(mx, my, 0.06 * u, 0.03 * u, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#5A4A3A'; ctx.fillRect(px - 0.005 * u, py, 0.01 * u, my - py);
+    ctx.fillStyle = k > 0 ? (col || '#2E8FA8') : '#FFFFFF'; ctx.beginPath(); ctx.moveTo(px - 0.13 * u, py + 0.03 * u); ctx.quadraticCurveTo(px, py - 0.08 * u, px + 0.13 * u, py + 0.03 * u); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.15)'; ctx.lineWidth = Math.max(1, u * 0.006); ctx.stroke();
+  }
+}
+function drawDetails(o, z, t, push) {   // push(d, fn): cada detalle con su propia profundidad (si no, se dibuja ya)
+  const det = o.det || []; let flags = 0, tc = 0, np = 0;
+  const [hTop, plano] = alturaTejado(o), arriba = o.x + o.y + 0.05;
+  const put = (d, fn) => push ? push(d, fn) : fn();
+  const vis = (o.face === 'N' || o.face === 'W') ? -1 : 1;   // si la casa nos da la espalda, los animales en el jardín de atrás (que es el que se ve)
+  const pet = () => enFrente(o, 0.48 * vis, [-0.2, 0.2, 0, -0.32, 0.32][np++ % 5]);
+  const techo = () => { const r = enFrente(o, plano ? -0.05 : 0, [-0.12, 0.13][tc++ % 2]); return [r[0], r[1], z + hTop - (plano ? 0 : 0.03)]; };
+  const suelo = (draw) => { const [x, y] = pet(); put(x + y, () => draw(x, y)); };
   for (const d of det) {
-    if (d === 'gato') drawCat(o.x - 0.15, o.y + 0.5, z, t, 1.2);
-    if (d === 'gato_blanco') drawCat(o.x + 0.2, o.y + 0.5, z, t + 0.5, 1.2, '#F4F4F0');
-    if (d === 'gato_naranja') drawCat(o.x - 0.2, o.y + 0.48, z, t + 1.5, 1.2);
-    if (d === 'gato_gris') drawCat(o.x - 0.15, o.y + 0.5, z, t, 1.2, '#7C7C80');
-    if (d === 'gatos_techo') { drawCat(o.x - 0.12, o.y, z + 0.66, t, 1.1, '#4A4A4A'); drawCat(o.x + 0.14, o.y, z + 0.64, t + 1, 1.1); }
-    if (d === 'gato_blanco_techo') drawCat(o.x + 0.05, o.y, z + 0.68, t, 1.15, '#F4F4F0');
-    if (d === 'conejo') drawRabbit(o.x + 0.2, o.y + 0.5, z, t, 1.3);
-    if (d === 'perro') drawDog(o.x + 0.22, o.y + 0.5, z, t, 1.2);
-    if (d === 'beagle') drawDog(o.x + 0.25, o.y + 0.5, z, t, 1.15, '#F3E2C7', '#8A5A2E');
-    if (d === 'bichon') drawDog(o.x + 0.22, o.y + 0.52, z, t, 1.1, '#FAFAFA', '#E6E6E6', true);
-    if (d === 'moto') drawMoto(o.x + 0.38, o.y + 0.42, z);
-    if (d === 'terraza') drawTerraza(o, z);
-    if (d === 'gato_negro') drawCat(o.x + 0.2, o.y + 0.3, z, t, 1.1, '#2B2B2B');
-    if (d === 'gatos') { drawCat(o.x + 0.45, o.y - 0.12, z, t, 1.25, '#4A4A4A'); drawCat(o.x + 0.45, o.y + 0.18, z, t + 1, 1.25); }
-    if (d === 'cobaya') drawCobaya(o.x + 0.5, o.y + 0.2, z, t, 1.4);
-    if (d === 'hamster') drawHamster(o.x + 0.15, o.y + 0.5, z, t, 1.4);
-    if (d === 'chihuahua') drawDog(o.x + 0.2, o.y + 0.52, z, t, 1.2, '#D9A866', '#B98545', true);
-    if (d === 'perros') { drawDog(o.x - 0.2, o.y + 0.55, z, t, 1.2); drawDog(o.x + 0.25, o.y + 0.5, z, t + 1, 1.1, '#F2F2F2', '#9A9A9A'); }
-    if (d === 'corazon') drawHeart(o, z);
-    if (d === 'flores') drawFlowers(o, z);
-    if (['peru', 'espana', 'zamora', 'cuba', 'canarias'].includes(d)) { drawFlag(o.x + 0.2 - flags * 0.32, o.y + flags * 0.05, z + 0.7, t + flags, d); flags++; }
+    const k = np + 1;
+    const cat = (col, s = 1.2) => suelo((x, y) => drawCat(x, y, z, t + k, s, col));
+    const dog = (...a) => suelo((x, y) => drawDog(x, y, z, t + k, ...a));
+    if (d === 'gato' || d === 'gato_naranja') cat(undefined);
+    if (d === 'gato_blanco') cat('#F4F4F0');
+    if (d === 'gato_gris') cat('#7C7C80');
+    if (d === 'gato_negro') cat('#2B2B2B', 1.1);
+    if (d === 'gatos') { cat('#4A4A4A', 1.2); cat(undefined, 1.2); }
+    if (d === 'gatos_techo') { const a = techo(), b = techo(); put(arriba, () => { drawCat(a[0], a[1], a[2], t, 1.05, '#4A4A4A'); drawCat(b[0], b[1], b[2], t + 1, 1.05); }); }
+    if (d === 'gato_blanco_techo') { const a = techo(); put(arriba, () => drawCat(a[0], a[1], a[2], t, 1.1, '#F4F4F0')); }
+    if (d === 'conejo') suelo((x, y) => drawRabbit(x, y, z, t, 1.3));
+    if (d === 'perro') dog(1.2);
+    if (d === 'beagle') dog(1.15, '#F3E2C7', '#8A5A2E');
+    if (d === 'bichon') dog(1.1, '#FAFAFA', '#E6E6E6', true);
+    if (d === 'chihuahua') dog(1.2, '#D9A866', '#B98545', true);
+    if (d === 'perros') { dog(1.2); dog(1.1, '#F2F2F2', '#9A9A9A'); }
+    if (d === 'cobaya') suelo((x, y) => drawCobaya(x, y, z, t, 1.4));
+    if (d === 'hamster') suelo((x, y) => drawHamster(x, y, z, t, 1.4));
+    if (d === 'moto') { const [x, y] = enFrente(o, 0.45, 0.36); put(x + y, () => drawMoto(x, y, z)); }
+    if (d === 'terraza') { const [x, y] = enFrente(o, 0.5, 0); put(x + y, () => drawTerrazaF(o, z)); }
+    if (d === 'corazon') put(arriba, () => drawHeart(o, z));
+    if (d === 'flores') { const [x, y] = enFrente(o, 0.34 * vis, 0); put(x + y, () => drawFlowers(o, z, vis)); }
+    if (['peru', 'espana', 'zamora', 'cuba', 'canarias'].includes(d)) {
+      const [x, y] = plano ? enFrente(o, -0.12, 0.2 - flags * 0.22) : enFrente(o, 0, 0.22 - flags * 0.2), fl = flags++;
+      put(arriba + 0.01, () => drawFlag(x, y, z + hTop - (plano ? 0 : 0.02), t + fl, d)); }
   }
 }
 /* barrio de casas básicas: huecos en la parte de atrás de la isla, lejos de lo ya construido */
@@ -493,8 +526,9 @@ function drawCityGround(plan, zf, alpha = 1) {
     if (dir[1]) rectW(l.x - wv, l.y + dir[1] * 0.12, l.x + wv, l.y + dir[1] * h, z + 0.002, CAM); else rectW(l.x + dir[0] * 0.12, l.y - wv, l.x + dir[0] * h, l.y + wv, z + 0.002, CAM); }
   // caminos de tierra hasta los sitios especiales (en L hasta la calle más cercana del pueblo)
   for (const e of plan.especiales) { if (e.forma === 'puerto' || e.x == null) continue;
-    let best = null, bd = 1e9; for (const l of lotsUsados) { const d = Math.hypot(l.x - e.x, l.y - e.y); if (d < bd) { bd = d; best = l; } }
-    if (!best) continue; const tx = best.x + Math.sign(e.x - best.x) * 0.8, ty = best.y + Math.sign(e.y - best.y) * 0.8, w = 0.14;
+    let tx = null, ty = null, bd = 1e9;
+    for (const l of lotsUsados) { const dv = { S: [0, 1], N: [0, -1], E: [1, 0], W: [-1, 0] }[l.face], sx = l.x + dv[0] * (LOT / 2 + 0.3), sy = l.y + dv[1] * (LOT / 2 + 0.3), d = Math.hypot(sx - e.x, sy - e.y); if (d < bd) { bd = d; tx = sx; ty = sy; } }
+    if (tx == null) continue; const w = 0.14;
     rectW(Math.min(e.x, tx) - w, e.y - w, Math.max(e.x, tx) + w, e.y + w, z + 0.001, TIERRA); rectW(tx - w, Math.min(e.y, ty) - w, tx + w, Math.max(e.y, ty) + w, z + 0.001, TIERRA); }
   ctx.restore();
 }
@@ -516,7 +550,7 @@ function drawGranja(o, z, t) {   // casita + campo de cultivo grande + cercado d
   fillPoly([P(x + 0.3, y + 0.15, z + 0.005), P(x + 1.15, y + 0.15, z + 0.005), P(x + 1.15, y + 1.05, z + 0.005), P(x + 0.3, y + 1.05, z + 0.005)], '#A8D47F');
   fenceLine(x + 0.3, y + 0.15, x + 1.15, y + 0.15, z); fenceLine(x + 0.3, y + 0.15, x + 0.3, y + 1.05, z);
   drawHouseF({ x: x + 0.7, y: y - 0.55, w: 0.62, d: 0.5, h: 0.36, hr: 0.24, roof: '#B5452E', wall: '#F3E3C3' }, z, 'S');
-  box(x + 0.25, y - 0.95, 0.3, 0.3, 0.5, z, '#B5452E', { tcol: '#C9654E' });   // granero
+  for (const [hx, hy] of [[0.3, 0.05], [0.45, 0.02], [0.37, -0.08]]) { const [bx, by] = P(x + hx, y + hy, z); const u = U(); ctx.fillStyle = '#E2B84D'; ctx.beginPath(); ctx.ellipse(bx, by - 0.05 * u, 0.07 * u, 0.055 * u, 0, 0, 7); ctx.fill(); ctx.strokeStyle = '#C49A35'; ctx.lineWidth = Math.max(1, u * 0.008); ctx.stroke(); }
   drawHorse(x + 0.65, y + 0.5, z, t); drawHorse(x + 0.9, y + 0.8, z, t + 1.3);
   fenceLine(x + 1.15, y + 0.15, x + 1.15, y + 1.05, z); fenceLine(x + 0.3, y + 1.05, x + 1.15, y + 1.05, z, [0.4, 0.6]);
 }
