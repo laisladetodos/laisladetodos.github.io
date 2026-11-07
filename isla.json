@@ -1,8 +1,8 @@
 {
- "dia": 4,
- "habitantes": 107,
+ "dia": 5,
+ "habitantes": 172,
  "radio": 3.6,
- "actualizado": "2026-11-06",
+ "actualizado": "2026-11-07",
  "construcciones": [
   {
    "tipo": "casa",
@@ -53,10 +53,11 @@
    "x": 0.75,
    "y": 1.45,
    "dia": 2,
-   "color": "#6C5CE7",
+   "color": "#2E6FD8",
    "detalles": [
     "gato"
-   ]
+   ],
+   "pared": "#2B2B2B"
   },
   {
    "tipo": "casa",
@@ -104,7 +105,8 @@
    "dia": 2,
    "color": "#2E8FA8",
    "detalles": [
-    "espana"
+    "espana",
+    "terraza"
    ]
   },
   {
@@ -148,7 +150,8 @@
    "y": -2.0482,
    "dia": 3,
    "usuario": "@maside.forever",
-   "nombre": "Tienda de móviles"
+   "nombre": "Tienda de móviles",
+   "color": "#2B2B2B"
   },
   {
    "tipo": "casa",
@@ -189,7 +192,10 @@
    "x": 2.9409,
    "y": 0.2315,
    "dia": 3,
-   "color": "#3B9C8F"
+   "color": "#3B9C8F",
+   "detalles": [
+    "gato_blanco_techo"
+   ]
   },
   {
    "tipo": "negocio",
@@ -295,8 +301,196 @@
    "tipo": "casa",
    "forma": "unicornio",
    "dia": 3
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#3E9A4F",
+   "detalles": [
+    "gatos_techo"
+   ],
+   "usuario": "@getolover9",
+   "nombre": "Casa"
+  },
+  {
+   "tipo": "negocio",
+   "forma": "pizzeria",
+   "dia": 5,
+   "detalles": [
+    "moto"
+   ],
+   "usuario": "@user828028614457",
+   "nombre": "Pizzería"
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#F28DB2",
+   "detalles": [
+    "gato_naranja",
+    "gato_blanco"
+   ],
+   "usuario": "@ittsainna",
+   "nombre": "Casa"
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#2E6FD8",
+   "detalles": [
+    "perro"
+   ]
+  },
+  {
+   "tipo": "negocio",
+   "forma": "huerto",
+   "dia": 5
+  },
+  {
+   "tipo": "negocio",
+   "forma": "lavanderia",
+   "dia": 5,
+   "color": "#C8233A",
+   "pared": "#CFE9F7"
+  },
+  {
+   "tipo": "negocio",
+   "forma": "super",
+   "dia": 5
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#2E6FD8",
+   "detalles": [
+    "gato_negro"
+   ]
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#2E6FD8",
+   "pared": "#BFDDF5"
+  },
+  {
+   "tipo": "casa",
+   "forma": "tigre",
+   "dia": 5
+  },
+  {
+   "tipo": "negocio",
+   "forma": "peluqueria",
+   "dia": 5
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#C9A2F2",
+   "detalles": [
+    "conejo"
+   ]
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#1E1E1E",
+   "pared": "#3A3A3A"
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#E76F8A",
+   "pared": "#FFD1E0"
+  },
+  {
+   "tipo": "casa",
+   "forma": "torre",
+   "dia": 5
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#F2614C",
+   "detalles": [
+    "gato_blanco_techo"
+   ]
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#8B5A2B"
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#7A1F2B",
+   "pared": "#C0392B",
+   "detalles": [
+    "beagle",
+    "gato_negro"
+   ]
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#3B9C8F"
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#A50044",
+   "pared": "#004D98"
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#2E6FD8",
+   "pared": "#FFFFFF"
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#E76F8A",
+   "pared": "#FFD1E0",
+   "detalles": [
+    "espana"
+   ]
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#3E9A4F",
+   "detalles": [
+    "gato_gris"
+   ]
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#FFFFFF",
+   "pared": "#E3D4F5",
+   "detalles": [
+    "bichon"
+   ]
   }
  ],
- "basicas": 77,
- "nuevos_hoy": 73
+ "basicas": 118,
+ "nuevos_hoy": 65
 }

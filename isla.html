@@ -54,8 +54,8 @@ a.btn:focus-visible,button:focus-visible{outline:3px solid var(--yellow);outline
   <div class="who" id="cWho"></div>
   <div class="meta" id="cMeta"></div>
 </div>
-<script src="isla-lib.js?v=1794019322"></script>
-<script src="isla-extras.js?v=1794019322"></script>
+<script src="isla-lib.js?v=1794060275"></script>
+<script src="isla-extras.js?v=1794060275"></script>
 <script>
 'use strict';
 const SEED = 1.7;
@@ -109,7 +109,7 @@ function dibujarEdificio(o, t) {
   drawCustom({ ...c, x: o.x, y: o.y, face: o.face, ang: (o.ang || 0) + VIEW_ROT * Math.PI / 2, forma, color: c.color || o.roof || o.col }, forma === 'puerto' ? Z_SAND : o.z, t);
 }
 function dibujarDetalle(o, t) {
-  const det = o.data.detalles || (o.data.dibujo_detalle ? [o.data.dibujo_detalle] : []); if (det.length) return drawDetails({ x: o.x, y: o.y, det }, o.z, t);
+  const det = o.data.detalles || (o.data.dibujo_detalle ? [o.data.dibujo_detalle] : []); if (det.length) return drawDetails({ x: o.x, y: o.y, face: o.face, det }, o.z, t);
   const d = null, z = o.z; if (!d) return;
   if (d === 'gato') drawCat(o.x - 0.15, o.y + 0.5, z, t, 1.2);
   if (d === 'gatos') { drawCat(o.x + 0.45, o.y - 0.12, z, t, 1.25, '#4A4A4A'); drawCat(o.x + 0.45, o.y + 0.18, z, t + 1, 1.25); }

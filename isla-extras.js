@@ -120,6 +120,51 @@ function drawUnicornio(o, z) {
   const cols = ['#FF8FB1', '#FFC861', '#8FE3B0', '#7FC8FF', '#B79BFF'];          // crin de colores por el tejado
   for (let i = 0; i < 5; i++) { const [mx, my] = P(o.x - 0.2 + i * 0.12, o.y - 0.02, z + 0.72 - i * 0.01); ctx.fillStyle = cols[i]; ctx.beginPath(); ctx.arc(mx, my, 0.07 * u, 0, 7); ctx.fill(); }
 }
+function drawTigre(o, z) {
+  shadowAt(o.x, o.y, z, 0.42, 0.2);
+  drawHouseF({ x: o.x, y: o.y, roof: '#2B2B2B', h: 0.44, wall: '#F29B38' }, z, o.face);
+  const u = U(), w = 0.62, d = 0.55, x0 = o.x - w / 2, Y = o.y + d / 2, X = o.x + w / 2;
+  ctx.strokeStyle = '#2B2B2B'; ctx.lineWidth = Math.max(1.5, u * 0.03); ctx.lineCap = 'round';
+  for (const q of [0.12, 0.3, 0.7, 0.88]) { const a = P(x0 + w * q, Y, z + 0.38), b = P(x0 + w * q + 0.04, Y, z + 0.18); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+  for (const q of [0.2, 0.5, 0.8]) { const a = P(X, o.y - d / 2 + d * q, z + 0.4), b = P(X, o.y - d / 2 + d * q + 0.05, z + 0.2); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+  for (const dx of [-0.2, 0.2]) { const [ex, ey] = P(o.x + dx, o.y, z + 0.78); ctx.fillStyle = '#F29B38'; ctx.beginPath(); ctx.moveTo(ex - 0.07 * u, ey); ctx.lineTo(ex, ey - 0.13 * u); ctx.lineTo(ex + 0.07 * u, ey); ctx.fill(); ctx.fillStyle = '#2B2B2B'; ctx.beginPath(); ctx.moveTo(ex - 0.03 * u, ey); ctx.lineTo(ex, ey - 0.07 * u); ctx.lineTo(ex + 0.03 * u, ey); ctx.fill(); }
+}
+function drawTorre(o, z) {
+  shadowAt(o.x, o.y, z, 0.32, 0.16);
+  box(o.x - 0.2, o.y - 0.2, 0.4, 0.4, 0.95, z, '#9C9A8E', { tcol: '#B5B3A6' });
+  for (let i = -2; i <= 2; i += 2) box(o.x - 0.24 + (i + 2) * 0.1, o.y - 0.24, 0.1, 0.48, 0.1, z + 0.95, '#8A887C');
+  fillPoly(faceL(o.x - 0.07, o.x + 0.07, z, z + 0.26, o.y + 0.2), C.woodDark);
+  fillPoly(faceL(o.x - 0.06, o.x + 0.06, z + 0.55, z + 0.72, o.y + 0.2), '#2A2A2A');
+  const [fx, fy] = P(o.x + 0.12, o.y - 0.1, z + 1.05); const u = U(); ctx.fillStyle = '#DDD'; ctx.fillRect(fx - 0.01 * u, fy - 0.35 * u, 0.02 * u, 0.35 * u); ctx.fillStyle = '#3E6B3E'; ctx.fillRect(fx + 0.01 * u, fy - 0.35 * u, 0.2 * u, 0.12 * u);
+}
+function drawHuerto(o, z, t) {
+  const g = 0.42; fillPoly([P(o.x - g, o.y - g, z + 0.006), P(o.x + g, o.y - g, z + 0.006), P(o.x + g, o.y + g, z + 0.006), P(o.x - g, o.y + g, z + 0.006)], '#9A6B3F');
+  for (let i = 0; i < 4; i++) { const yy = o.y - g + 0.12 + i * 0.2; fillPoly([P(o.x - g + 0.06, yy, z + 0.008), P(o.x + 0.1, yy, z + 0.008), P(o.x + 0.1, yy + 0.08, z + 0.008), P(o.x - g + 0.06, yy + 0.08, z + 0.008)], '#5BAA55');
+    for (let k = 0; k < 4; k++) { const [px, py] = P(o.x - g + 0.12 + k * 0.12, yy + 0.04, z + 0.01); ctx.fillStyle = k % 2 ? '#F2614C' : '#3E9A4F'; ctx.beginPath(); ctx.arc(px, py - U() * 0.03, Math.max(1.5, U() * 0.025), 0, 7); ctx.fill(); } }
+  fenceLine(o.x - g, o.y - g, o.x + g, o.y - g, z); fenceLine(o.x - g, o.y - g, o.x - g, o.y + g, z);
+  drawHouseF({ x: o.x + 0.25, y: o.y - 0.22, w: 0.3, d: 0.28, h: 0.26, hr: 0.16, roof: '#B5452E', wall: '#C9925E' }, z, 'S');
+  drawHorse(o.x + 0.25, o.y + 0.2, z, t);
+  fenceLine(o.x + g, o.y - g, o.x + g, o.y + g, z); fenceLine(o.x - g, o.y + g, o.x + g, o.y + g, z, [0.4, 0.6]);
+}
+function drawHorse(x, y, z, t) { const [bx, by] = P(x, y, z); const u = U() * 1.2, b = Math.sin(t * 2) * 0.006 * u;
+  ctx.fillStyle = 'rgba(20,40,40,0.2)'; ctx.beginPath(); ctx.ellipse(bx, by, 0.14 * u, 0.045 * u, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#8B5A2B'; for (const dx of [-0.08, -0.04, 0.05, 0.09]) ctx.fillRect(bx + dx * u - 0.01 * u, by - 0.12 * u, 0.02 * u, 0.12 * u);
+  ctx.beginPath(); ctx.ellipse(bx, by - 0.15 * u + b, 0.12 * u, 0.055 * u, 0, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(bx + 0.08 * u, by - 0.18 * u); ctx.lineTo(bx + 0.13 * u, by - 0.3 * u + b); ctx.lineTo(bx + 0.19 * u, by - 0.27 * u + b); ctx.lineTo(bx + 0.12 * u, by - 0.15 * u); ctx.fill();
+  ctx.fillStyle = '#3B2614'; ctx.beginPath(); ctx.moveTo(bx + 0.09 * u, by - 0.2 * u); ctx.lineTo(bx + 0.12 * u, by - 0.3 * u + b); ctx.lineTo(bx + 0.1 * u, by - 0.18 * u); ctx.fill(); ctx.fillRect(bx - 0.14 * u, by - 0.17 * u, 0.03 * u, 0.09 * u); }
+function drawRabbit(x, y, z, t, s = 1) { const [bx, by] = P(x, y, z); const u = U() * s, hop = Math.max(0, Math.sin(t * 5)) * 0.02 * u;
+  ctx.fillStyle = 'rgba(20,40,40,0.2)'; ctx.beginPath(); ctx.ellipse(bx, by, 0.08 * u, 0.03 * u, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#F7F7F2'; ctx.beginPath(); ctx.ellipse(bx, by - 0.06 * u - hop, 0.07 * u, 0.055 * u, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(bx + 0.06 * u, by - 0.11 * u - hop, 0.04 * u, 0, 7); ctx.fill();
+  for (const dx of [0.045, 0.075]) { ctx.beginPath(); ctx.ellipse(bx + dx * u, by - 0.19 * u - hop, 0.013 * u, 0.05 * u, 0.1, 0, 7); ctx.fill(); }
+  ctx.fillStyle = '#E8A9A0'; ctx.beginPath(); ctx.arc(bx + 0.095 * u, by - 0.11 * u - hop, 0.008 * u, 0, 7); ctx.fill(); }
+function drawMoto(x, y, z) { const [bx, by] = P(x, y, z); const u = U();
+  ctx.fillStyle = '#222'; for (const dx of [-0.08, 0.08]) { ctx.beginPath(); ctx.arc(bx + dx * u, by - 0.04 * u, 0.04 * u, 0, 7); ctx.fill(); }
+  ctx.fillStyle = '#D7263D'; ctx.beginPath(); ctx.moveTo(bx - 0.09 * u, by - 0.07 * u); ctx.lineTo(bx + 0.06 * u, by - 0.07 * u); ctx.lineTo(bx + 0.08 * u, by - 0.13 * u); ctx.lineTo(bx - 0.05 * u, by - 0.12 * u); ctx.fill();
+  ctx.fillStyle = '#FFFFFF'; ctx.fillRect(bx - 0.12 * u, by - 0.2 * u, 0.09 * u, 0.08 * u); ctx.fillStyle = '#D7263D'; ctx.fillRect(bx - 0.12 * u, by - 0.2 * u, 0.09 * u, 0.02 * u); }
+function drawTerraza(o, z) { const fc = o.face || 'S', off = { S: [0, 0.42], N: [0, -0.42], E: [0.42, 0], W: [-0.42, 0] }[fc];
+  for (const k of [-1, 1]) { const tx = o.x + off[0] + (off[1] ? k * 0.2 : 0), ty = o.y + off[1] + (off[0] ? k * 0.2 : 0);
+    box(tx - 0.05, ty - 0.05, 0.1, 0.1, 0.1, z, '#FFFFFF'); const [ux, uy] = P(tx, ty, z + 0.34), [ex, ey] = P(tx, ty, z + 0.1); const u = U();
+    ctx.fillStyle = C.woodDark; ctx.fillRect(ux - 0.008 * u, uy, 0.016 * u, ey - uy); ctx.fillStyle = k > 0 ? '#2E8FA8' : '#FFFFFF'; ctx.beginPath(); ctx.ellipse(ux, uy, 0.15 * u, 0.06 * u, 0, Math.PI, 0); ctx.fill(); } }
 function drawBasic(o, z) { shadowAt(o.x, o.y, z, 0.24, 0.12); drawHouseF({ x: o.x, y: o.y, w: 0.34, d: 0.3, h: 0.24, hr: 0.16, roof: '#C9CFD6', wall: '#FBFBF7' }, z, o.face); }
 function fenceLine(x0, y0, x1, y1, z, gap) {   // valla blanca de madera
   const n = Math.max(2, Math.round(Math.hypot(x1 - x0, y1 - y0) / 0.09)), u = U(), h = 0.13;
@@ -146,6 +191,12 @@ function drawCustom(o, z, t) {
   if (f === 'tienda') return drawShopF({ x: o.x, y: o.y, col: o.color }, z, o.face);
   if (f === 'basica') return drawBasic(o, z);
   if (f === 'unicornio') return drawUnicornio(o, z);
+  if (f === 'tigre') return drawTigre(o, z);
+  if (f === 'torre') return drawTorre(o, z);
+  if (f === 'huerto') return drawHuerto(o, z, t);
+  if (f === 'lavanderia') return shopWithSign(o, z, o.color || '#9ED3F0', 'LAVANDERÍA', '#FFFFFF', o.pared || '#DDF1FB');
+  if (f === 'super') return shopWithSign(o, z, '#2E9E5B', 'SUPER', '#FFFFFF', '#FFFFFF');
+  if (f === 'peluqueria') return shopWithSign(o, z, '#B66DFF', 'PELUQUERÍA', '#FFFFFF', '#F6EEFF');
   if ((o.det || o.detalles || []).includes('piscina')) {   // jardín propio con piscina, dentro de su parcela
     const g = 0.42; fillPoly([P(o.x - g, o.y - g, z + 0.006), P(o.x + g, o.y - g, z + 0.006), P(o.x + g, o.y + g, z + 0.006), P(o.x - g, o.y + g, z + 0.006)], '#86CC6E');
     fenceLine(o.x - g, o.y - g, o.x + g, o.y - g, z); fenceLine(o.x - g, o.y - g, o.x - g, o.y + g, z);
@@ -220,6 +271,17 @@ function drawDetails(o, z, t) {
   const det = o.det || []; let flags = 0;
   for (const d of det) {
     if (d === 'gato') drawCat(o.x - 0.15, o.y + 0.5, z, t, 1.2);
+    if (d === 'gato_blanco') drawCat(o.x + 0.2, o.y + 0.5, z, t + 0.5, 1.2, '#F4F4F0');
+    if (d === 'gato_naranja') drawCat(o.x - 0.2, o.y + 0.48, z, t + 1.5, 1.2);
+    if (d === 'gato_gris') drawCat(o.x - 0.15, o.y + 0.5, z, t, 1.2, '#7C7C80');
+    if (d === 'gatos_techo') { drawCat(o.x - 0.12, o.y, z + 0.66, t, 1.1, '#4A4A4A'); drawCat(o.x + 0.14, o.y, z + 0.64, t + 1, 1.1); }
+    if (d === 'gato_blanco_techo') drawCat(o.x + 0.05, o.y, z + 0.68, t, 1.15, '#F4F4F0');
+    if (d === 'conejo') drawRabbit(o.x + 0.2, o.y + 0.5, z, t, 1.3);
+    if (d === 'perro') drawDog(o.x + 0.22, o.y + 0.5, z, t, 1.2);
+    if (d === 'beagle') drawDog(o.x + 0.25, o.y + 0.5, z, t, 1.15, '#F3E2C7', '#8A5A2E');
+    if (d === 'bichon') drawDog(o.x + 0.22, o.y + 0.52, z, t, 1.1, '#FAFAFA', '#E6E6E6', true);
+    if (d === 'moto') drawMoto(o.x + 0.38, o.y + 0.42, z);
+    if (d === 'terraza') drawTerraza(o, z);
     if (d === 'gato_negro') drawCat(o.x + 0.2, o.y + 0.3, z, t, 1.1, '#2B2B2B');
     if (d === 'gatos') { drawCat(o.x + 0.45, o.y - 0.12, z, t, 1.25, '#4A4A4A'); drawCat(o.x + 0.45, o.y + 0.18, z, t + 1, 1.25); }
     if (d === 'cobaya') drawCobaya(o.x + 0.5, o.y + 0.2, z, t, 1.4);
