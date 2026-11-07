@@ -406,6 +406,17 @@ const distMuelle = th => Math.abs(((th - Math.PI / 2 + Math.PI * 3) % (2 * Math.
 function rocoso(th) { return distMuelle(th) > 0.75 && costaV(th) > 0.45; }
 // ancho de la franja de costa (sin girar): roca estrecha; playa ancha, que se ensancha lejos de las rocas
 function anchoCosta(th) { if (rocoso(th)) return 0.42; const v = costaV(th), q = distMuelle(th) <= 0.75 ? 1 : clamp((0.45 - v) / 0.5); return 0.42 + 0.75 * q * q * (3 - 2 * q); }
+function callesActivas(activos) {   // calles que tocan manzanas con algo construido, a lo largo de esas manzanas
+  const T = trazado(), act = activos.map(bi => T.blocks[bi]), out = [];
+  for (const s of T.streets) {
+    const lado = act.filter(b => s.v ? (Math.abs(b.x1 - s.x0) < 0.02 || Math.abs(b.x0 - s.x1) < 0.02) && b.y1 > s.y0 && b.y0 < s.y1
+                                      : (Math.abs(b.y1 - s.y0) < 0.02 || Math.abs(b.y0 - s.y1) < 0.02) && b.x1 > s.x0 && b.x0 < s.x1);
+    if (!lado.length) continue;
+    if (s.v) out.push([s.x0, Math.max(s.y0, Math.min(...lado.map(b => b.y0)) - s.w), s.x1, Math.min(s.y1, Math.max(...lado.map(b => b.y1)) + s.w)]);
+    else out.push([Math.max(s.x0, Math.min(...lado.map(b => b.x0)) - s.w), s.y0, Math.min(s.x1, Math.max(...lado.map(b => b.x1)) + s.w), s.y1]);
+  }
+  return out;
+}
 function planCiudad(items, nBasic, seed) {
   const _vr = VIEW_ROT; VIEW_ROT = 0; CITY = null;
   const T = trazado(), libres = new Set(T.lots.map(l => l.i)), usados = [];
@@ -431,6 +442,7 @@ function planCiudad(items, nBasic, seed) {
   // bloques activos (para calles) y su contorno
   const activos = new Set(usados.map(l => l.b));
   for (const bi of activos) { const b = T.blocks[bi]; for (const [x, y] of [[b.x0, b.y0], [b.x1, b.y0], [b.x0, b.y1], [b.x1, b.y1]]) marca(x, y, 0.7, town); }
+  for (const [x0, y0, x1, y1] of callesActivas([...activos])) { const n = Math.ceil(Math.max(x1 - x0, y1 - y0) / 0.3); for (let k = 0; k <= n; k++) { const q = k / n; for (const [x, y] of [[x0 + (x1 - x0) * q, y0], [x0 + (x1 - x0) * q, y1], [x0, y0 + (y1 - y0) * q], [x1, y0 + (y1 - y0) * q]]) marca(x, y, 0.45, town); } }   // la isla siempre cubre las calles
   // forma de la isla: el pueblo + bastante campo alrededor, con cabos y calas
   const avg = town.reduce((a, b) => a + b, 0) / N, extra = 2.6 + Math.sqrt(usados.length) * 0.12;
   let sh = new Float64Array(N);
@@ -516,23 +528,27 @@ function drawCityGround(plan, zf, alpha = 1) {
   const act = plan.activos.map(bi => T.blocks[bi]), calles = [];
   const dentro = (x, y) => Math.hypot(x, y) < islandR(Math.atan2(y, x) + VR, 5, CITY.seed) - anchoCosta(Math.atan2(y, x)) - 0.3;
   const recorta = (a, b, pt) => { while (a < b && !dentro(...pt(a))) a += 0.05; while (b > a && !dentro(...pt(b))) b -= 0.05; return [a, b]; };
-  for (const s of T.streets) {
-    const lado = act.filter(b => s.v ? (Math.abs(b.x1 - s.x0) < 0.02 || Math.abs(b.x0 - s.x1) < 0.02) && b.y1 > s.y0 && b.y0 < s.y1
-                                      : (Math.abs(b.y1 - s.y0) < 0.02 || Math.abs(b.y0 - s.y1) < 0.02) && b.x1 > s.x0 && b.x0 < s.x1);
-    if (!lado.length) continue;
-    if (s.v) { let ya = Math.max(s.y0, Math.min(...lado.map(b => b.y0)) - s.w), yb = Math.min(s.y1, Math.max(...lado.map(b => b.y1)) + s.w); const cx = (s.x0 + s.x1) / 2; [ya, yb] = recorta(ya, yb, y => [cx, y]); if (yb > ya) calles.push([s.x0, ya, s.x1, yb]); }
-    else { let xa = Math.max(s.x0, Math.min(...lado.map(b => b.x0)) - s.w), xb = Math.min(s.x1, Math.max(...lado.map(b => b.x1)) + s.w); const cy = (s.y0 + s.y1) / 2; [xa, xb] = recorta(xa, xb, x => [x, cy]); if (xb > xa) calles.push([xa, s.y0, xb, s.y1]); }
+  for (const [x0, y0, x1, y1] of callesActivas(plan.activos)) {
+    if (x1 - x0 < y1 - y0) { const cx = (x0 + x1) / 2; const [ya, yb] = recorta(y0, y1, y => [cx, y]); if (yb > ya) calles.push([x0, ya, x1, yb]); }
+    else { const cy = (y0 + y1) / 2; const [xa, xb] = recorta(x0, x1, x => [x, cy]); if (xb > xa) calles.push([xa, y0, xb, y1]); }
   }
   const maxY = Math.max(1.5, ...act.filter(b => b.x0 <= 0.4 && b.x1 >= -0.4 || Math.abs(b.x0 - AVE) < 0.05 || Math.abs(b.x1 + AVE) < 0.05).map(b => b.y1));
   const muelle = [-AVE, maxY - 0.2, AVE, isR0(Math.PI / 2, 5) - 0.1]; calles.push(muelle);
   // caminos de tierra (se dibujan antes que las calles: llegan al borde de la acera y no se suben encima)
   for (const e of plan.especiales) { if (!['huerto', 'arbol', 'torre'].includes(e.forma) || e.x == null) continue;
     const cand = e.forma === 'torre' ? [muelle] : calles; let best = null, bd = 1e9;
-    for (const [x0, y0, x1, y1] of cand) { const px = clamp(e.x, x0, x1), py = clamp(e.y, y0, y1), d = Math.hypot(px - e.x, py - e.y); if (d < bd) { bd = d; best = [px, py]; } }
-    if (!best) continue; const [tx, ty] = best, w = 0.13;
+    for (const [x0, y0, x1, y1] of cand) { const px = clamp(e.x, x0, x1), py = clamp(e.y, y0, y1), d = Math.hypot(px - e.x, py - e.y); if (d < bd) { bd = d; best = [px, py, Math.abs(py - e.y) > Math.abs(px - e.x)]; } }
+    if (!best) continue; const [tx, ty] = best;
     const [sx, sy] = e.forma === 'torre' ? [e.x + Math.sign(tx - e.x) * 0.2, e.y] : [e.x, e.y];
-    if (Math.abs(tx - sx) > 0.01) rectW(Math.min(sx, tx) - (tx < sx ? 0.05 : w), sy - w, Math.max(sx, tx) + (tx > sx ? 0.05 : w), sy + w, z + 0.001, TIERRA);
-    if (Math.abs(ty - sy) > 0.01) rectW(tx - w, Math.min(sy, ty) - (ty < sy ? 0.05 : w), tx + w, Math.max(sy, ty) + (ty > sy ? 0.05 : w), z + 0.001, TIERRA); }
+    // camino con curva suave: sale del sitio y entra recto (perpendicular) en la acera
+    const ent = 0.35, [ex2, ey2] = best[2] ? [tx, ty + Math.sign(sy - ty) * ent] : [tx + Math.sign(sx - tx) * ent, ty];
+    const cx = (sx + ex2) / 2 + (h2(e.x * 7, e.y * 3) - 0.5) * 0.9, cy = (sy + ey2) / 2 + (h2(e.y * 5, e.x * 2) - 0.5) * 0.9;
+    const pts = []; for (let k = 0; k <= 24; k++) { const q = k / 24, a = (1 - q) * (1 - q), b = 2 * q * (1 - q), c = q * q; pts.push([a * sx + b * cx + c * ex2, a * sy + b * cy + c * ey2]); }
+    pts.push([tx, ty]);
+    const w = 0.12, L = [], Rr = [];
+    for (let k = 0; k < pts.length; k++) { const p0 = pts[Math.max(0, k - 1)], p1 = pts[Math.min(pts.length - 1, k + 1)], dx = p1[0] - p0[0], dy = p1[1] - p0[1], m = Math.hypot(dx, dy) || 1;
+      L.push([pts[k][0] - dy / m * w, pts[k][1] + dx / m * w]); Rr.push([pts[k][0] + dy / m * w, pts[k][1] - dx / m * w]); }
+    fillPoly([...L, ...Rr.reverse()].map(([x, y]) => { const [rx, ry] = rotXY(x, y); return P(rx, ry, z + 0.001); }), TIERRA); }
   for (const [x0, y0, x1, y1] of calles) rectW(x0, y0, x1, y1, z + 0.002, ASF);
   // plaza
   const circ = (r, zz, col) => { const pl = []; for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2; pl.push(P(Math.cos(a) * r, Math.sin(a) * r, zz)); } fillPoly(pl, col); };
