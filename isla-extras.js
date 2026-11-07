@@ -323,7 +323,7 @@ window.islandR = function (th, R, seed) {
 const FERRY_DX = 0.95, FERRY_DY = 1.95, PIER_LEN = 2.7;   // ferry atracado entero en el agua, junto al muelle largo
 // el ferry crece con la gente nueva que trae ese día (1 → pequeño; ~70 → x1.45; 300+ → grande)
 function ferryScale(nuevos) { return clamp(0.75 + Math.sqrt(Math.max(0, nuevos || 0)) / 12, 0.75, 2.0); }
-function ferryXY(rc, s = 1) { return [0.25 + 0.7 * s, rc + 0.55 + 1.4 * s]; }
+function ferryXY(rc, s = 1) { return [-(0.3 + 0.75 * s), rc + 0.55 + 1.4 * s]; }   // a la izquierda del muelle: el muelle queda delante y lo tapa
 function pierLen(s = 1) { return PIER_LEN * Math.max(1, 0.35 + 0.75 * s); }
 function drawFerryS(fx, fy, z, t, s = 1, alpha = 1) { const [ax, ay] = P(fx, fy, 0); ctx.save(); ctx.translate(ax, ay); ctx.scale(s, s); ctx.translate(-ax, -ay); drawFerry(fx, fy, z, t, alpha); ctx.restore(); }
 const ZONAS = {
