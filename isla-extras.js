@@ -186,14 +186,14 @@ function drawCustom(o, z, t) {
   if (f === 'comisaria') return shopWithSign(o, z, '#2B4C9B', 'POLICÍA', '#FFFFFF', '#EEF2FA');
   if (f === 'perrera') { shadowAt(o.x, o.y, z, 0.42, 0.2); drawHouseF({ x: o.x, y: o.y, roof: '#B5651D', h: 0.38, wall: '#FCEBD2' }, z, o.face); return; }
   if (f === 'restaurante') return drawRestaurant(o, z);
-  if (f === 'cueva') return drawCave(o, z);
+  if (f === 'cueva') return drawCaveBig(o, z);
   if (f === 'puerto') return drawPuerto(o, z);
   if (f === 'tienda') return drawShopF({ x: o.x, y: o.y, col: o.color }, z, o.face);
   if (f === 'basica') return drawBasic(o, z);
   if (f === 'unicornio') return drawUnicornio(o, z);
   if (f === 'tigre') return drawTigre(o, z);
   if (f === 'torre') return drawTorre(o, z);
-  if (f === 'huerto') return drawHuerto(o, z, t);
+  if (f === 'huerto') return drawGranja(o, z, t);
   if (f === 'lavanderia') return shopWithSign(o, z, o.color || '#9ED3F0', 'LAVANDERÍA', '#FFFFFF', o.pared || '#DDF1FB');
   if (f === 'super') return shopWithSign(o, z, '#2E9E5B', 'SUPER', '#FFFFFF', '#FFFFFF');
   if (f === 'peluqueria') return shopWithSign(o, z, '#B66DFF', 'PELUQUERÍA', '#FFFFFF', '#F6EEFF');
@@ -326,71 +326,130 @@ function ferryScale(nuevos) { return clamp(0.75 + Math.sqrt(Math.max(0, nuevos |
 function ferryXY(rc, s = 1) { return [-(0.3 + 0.75 * s), rc + 0.55 + 1.4 * s]; }   // a la izquierda del muelle: el muelle queda delante y lo tapa
 function pierLen(s = 1) { return PIER_LEN * Math.max(1, 0.35 + 0.75 * s); }
 function drawFerryS(fx, fy, z, t, s = 1, alpha = 1) { const [ax, ay] = P(fx, fy, 0); ctx.save(); ctx.translate(ax, ay); ctx.scale(s, s); ctx.translate(-ax, -ay); drawFerry(fx, fy, z, t, alpha); ctx.restore(); }
-const ZONAS = {
-  com:  { sx: 1, sy: 1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DEL MUELLE', pad: '#E9E2D0', mix: true },
-  resA: { sx: -1, sy: 1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DE LAS PALMERAS', pad: '#E6EAD6', mix: true },
-  resB: { sx: 1, sy: -1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DEL FARO', pad: '#EDE3D6', mix: true },
-  bas:  { sx: -1, sy: -1, p: 0.62, s: 0.36, b: 2, nombre: 'BARRIO NUEVO', pad: '#DFE5E8' },
-};
-const CITY_OFF = 0.8, AVE = 0.34;
-/* parcelas de una zona: en los barrios mixtos, manzanas desplazadas, algo de desorden y algún parque */
-function zonaLots(q, n) {
-  const cand = [];
-  for (let c = 0; c < 14; c++) for (let r = 0; r < 14; r++) {
-    const bi = Math.floor(c / q.b), bj = Math.floor(r / q.b);
-    let X = CITY_OFF + q.p / 2 + c * q.p + bi * q.s, Y = CITY_OFF + q.p / 2 + r * q.p + bj * q.s, park = false, d;
-    if (q.mix) {
-      park = (c + r > 1) && h2(c, r, 11) < 0.14;
-      d = Math.hypot(c, r * 1.15) + h2(c, r, 7) * 0.9;
-    } else d = Math.max(c, r) * 10 + c + r + r * 0.01;
-    const lc = c % q.b, lr = r % q.b, porFilas = q.mix ? (bi + bj) % 2 === 0 : true;
-    const face = porFilas ? (lr === q.b - 1 ? (q.sy > 0 ? 'S' : 'N') : (q.sy > 0 ? 'N' : 'S')) : (lc === q.b - 1 ? (q.sx > 0 ? 'E' : 'W') : (q.sx > 0 ? 'W' : 'E'));
-    cand.push({ c, r, bi, bj, x: q.sx * X, y: q.sy * Y, park, d, face });
+/* ================= CIUDAD v2 (7 nov 2026): trazado irregular, campo, sitios lógicos, playas y rocas =================
+   Trazado fijo y grande (no cambia al crecer): calles por subdivisión irregular, manzanas de tamaños distintos,
+   parcelas a lo largo de cada calle mirando a ella. Se ocupan desde la plaza hacia fuera, así el pueblo crece solo.
+   Sitios especiales fuera del casco: cueva en costa rocosa, torre vigilando la entrada del puerto, granja/huerta en el
+   campo, casa del árbol en un bosquecillo. Sus coordenadas se guardan (x, y) la primera vez para que no se muevan. */
+const ZONAS = { com: { nombre: 'BARRIO DEL MUELLE' }, resA: { nombre: 'BARRIO DE LAS PALMERAS' }, resB: { nombre: 'BARRIO DEL FARO' }, bas: { nombre: 'BARRIO NUEVO' } };
+const AVE = 0.35, LOT = 0.95, SETB = 0.06;
+const ESPECIALES = ['puerto', 'cueva', 'torre', 'huerto', 'arbol'];
+let _TRAZADO = null;
+function trazado() {
+  if (_TRAZADO) return _TRAZADO;
+  const rnd = mulberry32(91373), streets = [], blocks = [];
+  function split(r, depth) {
+    const w = r.x1 - r.x0, h = r.y1 - r.y0, maxB = 2.4 + rnd() * 2.6;
+    if (depth >= 2 && w < maxB && h < maxB) { blocks.push(r); return; }
+    const vert = depth === 0 ? true : depth === 1 ? false : (w > h ? rnd() < 0.85 : rnd() < 0.15);
+    const sw = depth <= 1 ? 0.7 : depth === 2 ? 0.55 : 0.42, main = depth <= 1;
+    if (vert) { if (w < 2 * 2.15 + sw) { blocks.push(r); return; }
+      const c = depth === 0 ? 0 : r.x0 + 2.15 + sw / 2 + rnd() * (w - 2 * 2.15 - sw);
+      streets.push({ x0: c - sw / 2, x1: c + sw / 2, y0: r.y0, y1: r.y1, w: sw, main, v: true });
+      split({ x0: r.x0, x1: c - sw / 2, y0: r.y0, y1: r.y1 }, depth + 1); split({ x0: c + sw / 2, x1: r.x1, y0: r.y0, y1: r.y1 }, depth + 1); }
+    else { if (h < 2 * 2.15 + sw) { blocks.push(r); return; }
+      const c = depth === 1 ? 0 : r.y0 + 2.15 + sw / 2 + rnd() * (h - 2 * 2.15 - sw);
+      streets.push({ x0: r.x0, x1: r.x1, y0: c - sw / 2, y1: c + sw / 2, w: sw, main, v: false });
+      split({ x0: r.x0, x1: r.x1, y0: r.y0, y1: c - sw / 2 }, depth + 1); split({ x0: r.x0, x1: r.x1, y0: c + sw / 2, y1: r.y1 }, depth + 1); }
   }
-  cand.sort((a, b) => a.d - b.d);
-  const out = []; let k = 0;
-  for (const l of cand) { if (k >= n) break; out.push(l); if (!l.park) k++; }
+  split({ x0: -18, x1: 18, y0: -18, y1: 18 }, 0);
+  const lots = [];
+  blocks.forEach((b, bi) => {
+    const W = b.x1 - b.x0, H = b.y1 - b.y0, d = LOT;
+    const along = len => { const k = Math.floor((len + 1e-6) / LOT), pad = (len - k * LOT) / 2; return Array.from({ length: k }, (_, i) => pad + LOT / 2 + i * LOT); };
+    for (const xo of along(W)) { lots.push({ x: b.x0 + xo, y: b.y0 + d / 2 + SETB, face: 'N', b: bi }); if (H >= 2 * d + 0.12) lots.push({ x: b.x0 + xo, y: b.y1 - d / 2 - SETB, face: 'S', b: bi }); }
+    const inner = H - 2 * d - 2 * SETB;
+    if (inner >= LOT) for (const yo of along(inner)) { const y = b.y0 + d + SETB + yo; lots.push({ x: b.x0 + d / 2 + SETB, y, face: 'W', b: bi }); if (W >= 2 * d + 0.12) lots.push({ x: b.x1 - d / 2 - SETB, y, face: 'E', b: bi }); }
+  });
+  lots.forEach((l, i) => { l.i = i; const j = (h2(i, 3, 5) - 0.5) * 0.08; if (l.face === 'N' || l.face === 'S') l.x += j; else l.y += j;
+    l.dist = Math.hypot(l.x, l.y); l.th = Math.atan2(l.y, l.x);
+    const dir = { S: [0, 1], N: [0, -1], E: [1, 0], W: [-1, 0] }[l.face], fx = l.x + dir[0] * (LOT / 2 + 0.3), fy = l.y + dir[1] * (LOT / 2 + 0.3);
+    l.main = streets.some(s => s.main && fx >= s.x0 - 0.05 && fx <= s.x1 + 0.05 && fy >= s.y0 - 0.05 && fy <= s.y1 + 0.05); });
+  return (_TRAZADO = { streets, blocks, lots });
+}
+const enSectorBasico = th => th < -Math.PI / 2 - 0.12 && th > -Math.PI + 0.12;
+function rocoso(th) { const dp = Math.abs(((th - Math.PI / 2 + Math.PI * 3) % (2 * Math.PI)) - Math.PI); return dp > 0.75 && (Math.sin(2 * th + 1.3) + 0.6 * Math.sin(5 * th + 0.4)) > 0.45; }
+function planCiudad(items, nBasic, seed) {
+  const _vr = VIEW_ROT; VIEW_ROT = 0; CITY = null;
+  const T = trazado(), libres = new Set(T.lots.map(l => l.i)), usados = [];
+  const especiales = items.filter(it => ESPECIALES.includes(it.forma));
+  const lejosEsp = l => especiales.every(e => e.x == null || Math.hypot(e.x - l.x, e.y - l.y) > (e.forma === 'huerto' ? 2.4 : 1.7));
+  for (const l of T.lots) if (l.dist < 1.25) libres.delete(l.i);                                  // plaza
+  const elegir = score => { let best = null, bs = 1e9; for (const i of libres) { const l = T.lots[i]; if (enSectorBasico(l.th) && l.dist > 1.8) continue; if (!lejosEsp(l)) continue; const s = score(l); if (s < bs) { bs = s; best = l; } } if (best) libres.delete(best.i); return best; };
+  for (const it of items) {
+    if (ESPECIALES.includes(it.forma)) continue;
+    const neg = !['casa', 'tigre', 'unicornio'].includes(it.forma || 'casa');
+    const l = elegir(neg ? (q => q.dist * (1 + 0.12 * h2(q.i, 9)) - (q.main ? 1.2 : 0)) : (q => q.dist * (1 + 0.18 * h2(q.i, 11)) + (q.main ? 0.7 : 0)));
+    if (l) { Object.assign(it, { x: l.x, y: l.y, face: l.face, lot: l.i }); usados.push(l); }
+  }
+  const basics = [];
+  for (const l of [...T.lots].filter(l => libres.has(l.i) && enSectorBasico(l.th) && lejosEsp(l)).sort((a, b) => a.dist - b.dist)) { if (basics.length >= nBasic) break; const ns = l.face === 'N' || l.face === 'S';
+    for (const k of [-1, 1]) if (basics.length < nBasic) basics.push({ x: l.x + (ns ? k * 0.245 : 0), y: l.y + (ns ? 0 : k * 0.245), face: l.face, forma: 'basica', lot: l.i });
+    libres.delete(l.i); usados.push(l); }
+  // radio del pueblo por ángulo
+  const N = 180, ang = i => i / N * 2 * Math.PI, dif = (a, b) => Math.abs(((a - b + Math.PI * 3) % (2 * Math.PI)) - Math.PI);
+  const town = new Float64Array(N).fill(1.6);
+  const marca = (x, y, m, arr) => { const d = Math.hypot(x, y), th = Math.atan2(y, x), w = Math.atan2(m, Math.max(0.01, d)); for (let i = 0; i < N; i++) { const dd = dif(ang(i), th); if (dd < w) arr[i] = Math.max(arr[i], (d + m) * Math.cos(dd)); } };
+  for (const l of usados) marca(l.x, l.y, 0.9, town);
+  // bloques activos (para calles) y su contorno
+  const activos = new Set(usados.map(l => l.b));
+  for (const bi of activos) { const b = T.blocks[bi]; for (const [x, y] of [[b.x0, b.y0], [b.x1, b.y0], [b.x0, b.y1], [b.x1, b.y1]]) marca(x, y, 0.7, town); }
+  // forma de la isla: el pueblo + bastante campo alrededor, con cabos y calas
+  const avg = town.reduce((a, b) => a + b, 0) / N, extra = 2.6 + Math.sqrt(usados.length) * 0.12;
+  let sh = new Float64Array(N);
+  for (let i = 0; i < N; i++) { const a = ang(i); sh[i] = Math.max(town[i] + extra * 0.75, (avg + extra) * (1 + 0.12 * Math.sin(3 * a + 1.1) + 0.09 * Math.sin(5 * a + 2.3) + 0.05 * Math.sin(9 * a + 0.7))); }
+  CITY = { shape: sh, SR: 5, seed };
+  const R = (th) => islandR(th, 5, seed);
+  // sitios especiales (si no tienen sitio guardado)
+  const libreAng = (th) => R(th) - town[Math.round(((th % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) / (2 * Math.PI) * N) % N];
+  for (const e of especiales) {
+    if (e.forma === 'puerto') { Object.assign(e, { x: 0, y: R(Math.PI / 2) - 0.3, ang: Math.PI / 2 }); continue; }
+    const costa = e.forma === 'cueva' || e.forma === 'torre', rr = th => R(th) - (e.forma === 'cueva' ? 0.95 : 0.9);
+    if (costa && e.th != null) { Object.assign(e, { x: Math.cos(e.th) * rr(e.th), y: Math.sin(e.th) * rr(e.th) }); continue; }
+    if (!costa && e.x != null) continue;
+    let best = null, bs = -1e9;
+    for (let k = 0; k < 360; k++) { const th = k / 360 * 2 * Math.PI, dp = dif(th, Math.PI / 2), free = libreAng(th); let s, r;
+      if (e.forma === 'torre') { const a = 2.0 / R(Math.PI / 2); s = -Math.abs(dif(th, Math.PI / 2 + a)) * 20 - (dp < a * 0.6 ? 9 : 0); r = R(th) - 0.9; }
+      else if (e.forma === 'cueva') { s = (rocoso(th) ? 6 : -6) + free * 0.5 - (dp < 1 ? 9 : 0); r = R(th) - 0.95; }
+      else if (e.forma === 'huerto') { s = -Math.abs(free - 4.5) * 1.5 - (dp < 0.8 ? 9 : 0) - (rocoso(th) ? 2 : 0); r = (R(th) + town[k / 2 | 0]) / 2 + 0.2; }
+      else { s = -Math.abs(free - 3.2) * 2 - (dp < 0.8 ? 9 : 0); r = town[k / 2 | 0] + 1.4; }
+      for (const o of especiales) if (o !== e && o.x != null) { const d = Math.hypot(o.x - Math.cos(th) * r, o.y - Math.sin(th) * r); if (d < 3) s -= (3 - d) * 4; }
+      if (s > bs) { bs = s; best = { x: Math.cos(th) * r, y: Math.sin(th) * r, th: costa ? th : undefined }; } }
+    Object.assign(e, best, { nuevoSitio: true });
+  }
+  // la isla también cubre los sitios especiales
+  for (const e of especiales) if (e.forma !== 'puerto') marca(e.x, e.y, e.forma === 'huerto' ? 2.0 : 1.2, town);
+  for (let i = 0; i < N; i++) sh[i] = Math.max(sh[i], town[i] + 0.9);
+  for (let p = 0; p < 3; p++) { const nx = new Float64Array(N); for (let i = 0; i < N; i++) nx[i] = Math.max(town[i] + 0.8, (sh[(i + N - 1) % N] + 2 * sh[i] + sh[(i + 1) % N]) / 4); sh = nx; }
+  CITY.shape = sh;
+  for (const e of especiales) { if (e.forma === 'puerto') e.y = R(Math.PI / 2) - 0.3;
+    if (e.th != null) { const r = R(e.th) - (e.forma === 'cueva' ? 0.95 : 0.9); e.x = Math.cos(e.th) * r; e.y = Math.sin(e.th) * r; } }
+  const plan = { items, basics, especiales, activos: [...activos], usados, SR: 5, zonas: { bas: basics } };
+  plan.arboles = arbolesCampo(plan, seed); plan.rocas = rocasCosta();
+  VIEW_ROT = _vr;
+  return plan;
+}
+function arbolesCampo(plan, seed) {
+  const T = trazado(), out = [], occ = [...plan.usados.map(l => [l.x, l.y, 1.05]), ...plan.especiales.map(e => [e.x, e.y, e.forma === 'huerto' ? 1.9 : e.forma === 'arbol' ? 0.6 : 1.1]), [0, 0, 1.4]];
+  const actB = plan.activos.map(bi => T.blocks[bi]);
+  for (let i = -30; i <= 30; i++) for (let j = -30; j <= 30; j++) {
+    const x = i * 0.75 + (h2(i, j, 1) - 0.5) * 0.5, y = j * 0.75 + (h2(i, j, 2) - 0.5) * 0.5, th = Math.atan2(y, x), r = Math.hypot(x, y);
+    if (r > islandR(th, 5, seed) - 0.75) continue;
+    if (Math.abs(x) < 0.9 && y > 0) continue;                                                   // camino al muelle
+    if (occ.some(([ox, oy, m]) => Math.hypot(ox - x, oy - y) < m)) continue;
+    const enB = actB.find(b => x > b.x0 - 0.75 && x < b.x1 + 0.75 && y > b.y0 - 0.75 && y < b.y1 + 0.75);
+    if (enB) { const m = 1.25; if (x > enB.x0 + m && x < enB.x1 - m && y > enB.y0 + m && y < enB.y1 - m && h2(i, j, 13) < 0.45) out.push({ x, y, s: 0.45 + h2(i, j, 4) * 0.3 }); continue; }
+    const bosque = Math.sin(x * 0.55 + 1.7) * Math.cos(y * 0.6 - 0.4) + 0.5 * Math.sin((x + y) * 0.9);
+    const cercaArbol = plan.especiales.some(e => e.forma === 'arbol' && Math.hypot(e.x - x, e.y - y) < 2.0);
+    if (bosque > 0.35 || cercaArbol || h2(i, j, 7) < 0.09) out.push({ x, y, s: 0.55 + h2(i, j, 4) * 0.4, palm: !cercaArbol && h2(i, j, 9) < 0.25 && r > islandR(th, 5, seed) - 1.8 });
+  }
   return out;
 }
-function planCiudad(items, nBasic, seed) {
-  const _vr = VIEW_ROT; VIEW_ROT = 0;
-  CITY = null;
-  const grupos = { com: [], resA: [], resB: [] }; let puerto = null, nr = 0; const orden = ['com', 'resA', 'resB'];
-  for (const it of items) { if (it.forma === 'puerto') { puerto = it; continue; } grupos[orden[nr++ % 3]].push(it); }
-  const zonas = {}, parks = [];
-  for (const k of orden) { const L = zonaLots(ZONAS[k], grupos[k].length); let i = 0;
-    for (const l of L) { if (l.park) { parks.push(l); continue; } Object.assign(grupos[k][i++], { x: l.x, y: l.y, zona: k, face: l.face }); } zonas[k] = L; }
-  const basics = zonaLots(ZONAS.bas, nBasic).map(l => ({ ...l, forma: 'basica', zona: 'bas' })); zonas.bas = basics;
-  // forma de la isla: cubre todas las parcelas con margen
-  const N = 180, need = new Float64Array(N);
-  for (let i = 0; i < N; i++) need[i] = _islandR0(i / N * 2 * Math.PI, 1.9, seed);
-  const pts = [];
-  for (const k in zonas) { const q = ZONAS[k]; for (const l of zonas[k]) pts.push([l.x, l.y, q.p * 0.5 + 0.75]); }
-  pts.push([0, 0, 1.4]);
-  // las calles que rodean cada barrio también tienen que quedar en tierra
-  for (const k in zonas) { const q = ZONAS[k], L = zonas[k]; if (!L.length) continue;
-    const mbi = Math.max(...L.map(l => Math.floor(l.c / q.b))), mbj = Math.max(...L.map(l => Math.floor(l.r / q.b)));
-    const far = n => CITY_OFF + n * q.b * q.p + (n - 0.5) * q.s + q.s / 2, Xm = far(mbi + 1), Ym = far(mbj + 1);
-    for (let f = 0; f <= 1.0001; f += 0.05) { pts.push([q.sx * Xm, q.sy * lerp(AVE, Ym, f), 0.95]); pts.push([q.sx * lerp(AVE, Xm, f), q.sy * Ym, 0.95]); } pts.push([q.sx * Xm, q.sy * Ym, 1.2]); }
-  for (const [x, y, m] of pts) { const d = Math.hypot(x, y), th = Math.atan2(y, x), w = Math.atan2(m, Math.max(0.01, d));
-    for (let i = 0; i < N; i++) { const a = i / N * 2 * Math.PI; let dd = Math.abs(((a - th + Math.PI * 3) % (2 * Math.PI)) - Math.PI); if (dd < w) need[i] = Math.max(need[i], (d + m) * Math.cos(dd)); } }
-  let sh = Float64Array.from(need);
-  for (let pass = 0; pass < 4; pass++) { const nx = new Float64Array(N); for (let i = 0; i < N; i++) { let s = 0; for (let k = -4; k <= 4; k++) s += sh[(i + k + N) % N]; nx[i] = Math.max(need[i], s / 9); } sh = nx; }
-  // salientes y entrantes que aparecen según crece la ciudad (nunca delante del muelle)
-  const tot = items.length + nBasic, ang = i => i / N * 2 * Math.PI, dif = (a, b) => Math.abs(((a - b + Math.PI * 3) % (2 * Math.PI)) - Math.PI);
-  for (let k = 0; k < 7; k++) {
-    const a0 = h2(k, 17, 3) * 2 * Math.PI; if (dif(a0, Math.PI / 2) < 0.6) continue;
-    const umbral = k * 22; if (tot <= umbral) continue;
-    const amp = (k % 3 === 2 ? -0.9 : 1) * Math.min(3.2, 0.8 + (tot - umbral) / 35), w = 0.12 + h2(k, 5, 9) * 0.2;
-    for (let i = 0; i < N; i++) { const g = Math.exp(-Math.pow(dif(ang(i), a0) / w, 2)); sh[i] = Math.max(need[i] + 0.25, sh[i] + amp * g); }
-  }
-  for (let pass = 0; pass < 2; pass++) { const nx = new Float64Array(N); for (let i = 0; i < N; i++) nx[i] = Math.max(need[i] + 0.2, (sh[(i + N - 1) % N] + 2 * sh[i] + sh[(i + 1) % N]) / 4); sh = nx; }
-  for (let i = 0; i < N; i++) sh[i] *= 1 + 0.03 * Math.sin(ang(i) * 7 + seed) + 0.02 * Math.sin(ang(i) * 13 + seed * 2);
-  const SR = 5; CITY = { shape: sh, SR, seed };
-  // el puerto es el muelle del ferry (uno solo); su dueño lo va mejorando como cualquier construcción
-  if (puerto) { const r = islandR(Math.PI / 2, SR, seed); Object.assign(puerto, { x: 0, y: r - 0.3, ang: Math.PI / 2, zona: 'puerto' }); }
-  VIEW_ROT = _vr;
-  return { items, basics, zonas, parks, SR };
+function rocasCosta() {
+  const out = [];
+  for (let k = 0; k < 260; k++) { const th = k / 260 * 2 * Math.PI; if (!rocoso(th)) continue; const r = islandR(th, 5, CITY.seed) - 0.12 + (h2(k, 2) - 0.5) * 0.2;
+    out.push({ x: Math.cos(th) * r, y: Math.sin(th) * r, s: 0.6 + h2(k, 3) * 0.7 }); }
+  return out;
 }
 function rectW(x0, y0, x1, y1, z, col) { const a = rotXY(x0, y0), b = rotXY(x1, y1), X0 = Math.min(a[0], b[0]), X1 = Math.max(a[0], b[0]), Y0 = Math.min(a[1], b[1]), Y1 = Math.max(a[1], b[1]);
   fillPoly([P(X0, Y0, z), P(X1, Y0, z), P(X1, Y1, z), P(X0, Y1, z)], col); }
@@ -400,44 +459,64 @@ function drawPierR(rc, z, len = PIER_LEN) {   // muelle del ferry, girable
   box(Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]), 0.05, z - 0.06, C.wood, { tcol: '#C98C57' });
   for (const [px, py] of [[-w / 2, y0 + len], [w / 2, y0 + len], [w / 2, y0 + len * 0.5]]) { const [qx, qy] = rotXY(px, py); box(qx - 0.05, qy - 0.05, 0.1, 0.1, 0.2, z - 0.1, C.woodDark); }
 }
+function drawRock(x, y, z, s) { const [bx, by] = P(x, y, z); const u = U() * s;
+  ctx.fillStyle = '#7E7B75'; ctx.beginPath(); ctx.moveTo(bx - 0.16 * u, by); ctx.lineTo(bx - 0.1 * u, by - 0.14 * u); ctx.lineTo(bx + 0.04 * u, by - 0.19 * u); ctx.lineTo(bx + 0.16 * u, by - 0.06 * u); ctx.lineTo(bx + 0.14 * u, by + 0.03 * u); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#9C9891'; ctx.beginPath(); ctx.moveTo(bx - 0.1 * u, by - 0.14 * u); ctx.lineTo(bx + 0.04 * u, by - 0.19 * u); ctx.lineTo(bx + 0.06 * u, by - 0.08 * u); ctx.lineTo(bx - 0.06 * u, by - 0.05 * u); ctx.closePath(); ctx.fill(); }
 function drawCityGround(plan, zf, alpha = 1) {
   if (alpha <= 0) return; ctx.save(); ctx.globalAlpha = alpha;
-  const z = zf(0, 0) + 0.004, ASF = '#A9AFAB', ACERA = '#D9D3C4', CAMINO = '#E2D9C6';
-  const W2 = (xa, xb, ya, yb, zz, col) => rectW(Math.min(xa, xb), Math.min(ya, yb), Math.max(xa, xb), Math.max(ya, yb), zz, col);
-  for (const k in plan.zonas) { const q = ZONAS[k], L = plan.zonas[k]; if (!L.length) continue;
-    const mbi = Math.max(...L.map(l => Math.floor(l.c / q.b))), mbj = Math.max(...L.map(l => Math.floor(l.r / q.b)));
-    const edge = n => CITY_OFF + n * q.b * q.p + (n - 0.5) * q.s;                  // centro de la calle n
-    const far = n => edge(n) + q.s / 2;
-    const Xmax = far(mbi + 1), Ymax = far(mbj + 1);
-    // calles: una entre cada fila y columna de manzanas, y otra rodeando el barrio
-    for (let n = 1; n <= mbi + 1; n++) { const c = edge(n); W2(q.sx * (c - q.s / 2), q.sx * (c + q.s / 2), q.sy * AVE, q.sy * Ymax, z, ASF); }
-    for (let n = 1; n <= mbj + 1; n++) { const c = edge(n); W2(q.sx * AVE, q.sx * Xmax, q.sy * (c - q.s / 2), q.sy * (c + q.s / 2), z, ASF); }
-    // caminito de cada casa hasta su calle
-    for (const l of L) { if (l.park) { W2(l.x - q.p * 0.45, l.x + q.p * 0.45, l.y - q.p * 0.45, l.y + q.p * 0.45, z + 0.001, '#7FC56C'); continue; }
-      // el camino llega siempre hasta el asfalto (calle del barrio o avenida)
-      const h = q.p / 2 + 0.03, wv = q.p * 0.14, dir = { S: [0, 1], N: [0, -1], E: [1, 0], W: [-1, 0] }[l.face];
-      if (dir[1]) { const haciaCentro = Math.sign(dir[1]) !== Math.sign(l.y), primera = Math.floor(l.r / q.b) === 0;
-        const yEnd = haciaCentro && primera ? Math.sign(l.y) * (AVE + 0.05) : l.y + dir[1] * h; W2(l.x - wv, l.x + wv, l.y + dir[1] * 0.12, yEnd, z + 0.002, CAMINO); }
-      else { const haciaCentro = Math.sign(dir[0]) !== Math.sign(l.x), primera = Math.floor(l.c / q.b) === 0;
-        const xEnd = haciaCentro && primera ? Math.sign(l.x) * (AVE + 0.05) : l.x + dir[0] * h; W2(l.x + dir[0] * 0.12, xEnd, l.y - wv, l.y + wv, z + 0.002, CAMINO); } }
+  const T = trazado(), z = zf(0, 0) + 0.004, ASF = '#A9AFAB', CAM = '#E2D9C6', TIERRA = '#C9A578', N = CITY.shape.length;
+  // costa rocosa: la franja de arena se convierte en roca
+  for (let i = 0; i < N; i++) { const a0 = i / N * 2 * Math.PI, a1 = (i + 1) / N * 2 * Math.PI; if (!rocoso(a0)) continue;
+    const r0 = islandR(a0 + VIEW_ROT * Math.PI / 2, 5, CITY.seed), r1 = islandR(a1 + VIEW_ROT * Math.PI / 2, 5, CITY.seed);
+    const q = [[Math.cos(a0) * r0, Math.sin(a0) * r0], [Math.cos(a1) * r1, Math.sin(a1) * r1], [Math.cos(a1) * (r1 - 0.42), Math.sin(a1) * (r1 - 0.42)], [Math.cos(a0) * (r0 - 0.42), Math.sin(a0) * (r0 - 0.42)]].map(([x, y]) => { const [rx, ry] = rotXY(x, y); return P(rx, ry, Z_SAND + 0.006); });
+    fillPoly(q, i % 3 ? '#8E8B85' : '#85827C'); }
+  // calles: solo las que tocan manzanas con algo construido, recortadas a ellas
+  const act = plan.activos.map(bi => T.blocks[bi]);
+  for (const s of T.streets) {
+    const lado = act.filter(b => s.v ? (Math.abs(b.x1 - s.x0) < 0.02 || Math.abs(b.x0 - s.x1) < 0.02) && b.y1 > s.y0 && b.y0 < s.y1
+                                      : (Math.abs(b.y1 - s.y0) < 0.02 || Math.abs(b.y0 - s.y1) < 0.02) && b.x1 > s.x0 && b.x0 < s.x1);
+    if (!lado.length) continue;
+    const dentro = (x, y) => Math.hypot(x, y) < islandR(Math.atan2(y, x) + VIEW_ROT * Math.PI / 2, 5, CITY.seed) - 0.75;
+    const recorta = (a, b, pt) => { while (a < b && !dentro(...pt(a))) a += 0.05; while (b > a && !dentro(...pt(b))) b -= 0.05; return [a, b]; };
+    if (s.v) { let ya = Math.max(s.y0, Math.min(...lado.map(b => b.y0)) - s.w), yb = Math.min(s.y1, Math.max(...lado.map(b => b.y1)) + s.w); const cx = (s.x0 + s.x1) / 2; [ya, yb] = recorta(ya, yb, y => [cx, y]); if (yb > ya) rectW(s.x0, ya, s.x1, yb, z, ASF); }
+    else { let xa = Math.max(s.x0, Math.min(...lado.map(b => b.x0)) - s.w), xb = Math.min(s.x1, Math.max(...lado.map(b => b.x1)) + s.w); const cy = (s.y0 + s.y1) / 2; [xa, xb] = recorta(xa, xb, x => [x, cy]); if (xb > xa) rectW(xa, s.y0, xb, s.y1, z, ASF); }
   }
-  // avenidas en cruz (con aceras) y plaza
-  const R = CITY ? CITY.SR : 3; const ext = { px: 1.2, nx: 1.2, ny: 1.2 };
-  for (const k in plan.zonas) { const q = ZONAS[k], L = plan.zonas[k]; if (!L.length) continue;
-    const mbi = Math.max(...L.map(l => Math.floor(l.c / q.b))), mbj = Math.max(...L.map(l => Math.floor(l.r / q.b)));
-    const far = n => CITY_OFF + n * q.b * q.p + (n - 0.5) * q.s + q.s / 2;
-    if (q.sx > 0) ext.px = Math.max(ext.px, far(mbi + 1)); else ext.nx = Math.max(ext.nx, far(mbi + 1));
-    if (q.sy < 0) ext.ny = Math.max(ext.ny, far(mbj + 1)); }
-  const ye = isR0(Math.PI / 2, R) - 0.1, yb = -Math.min(ext.ny, isR0(-Math.PI / 2, R) - 0.35), xe = Math.min(ext.px, isR0(0, R) - 0.35), xb = -Math.min(ext.nx, isR0(Math.PI, R) - 0.35);
-  rectW(-AVE - 0.08, yb, AVE + 0.08, ye, z + 0.004, ACERA); rectW(xb, -AVE - 0.08, xe, AVE + 0.08, z + 0.004, ACERA);
-  rectW(-AVE, yb, AVE, ye, z + 0.005, ASF); rectW(xb, -AVE, xe, AVE, z + 0.005, ASF);
-  ctx.setLineDash([U() * 0.12, U() * 0.12]); ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = Math.max(1, U() * 0.025);
-  for (const [a, b] of [[[0, 0.9], [0, ye - 0.3]], [[0, -0.9], [0, yb + 0.3]], [[0.9, 0], [xe - 0.3, 0]], [[-0.9, 0], [xb + 0.3, 0]]]) { ctx.beginPath(); const ra = rotXY(a[0], a[1]), rb = rotXY(b[0], b[1]), p0 = P(ra[0], ra[1], z + 0.006), p1 = P(rb[0], rb[1], z + 0.006); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }
-  ctx.setLineDash([]);
-  const pl = []; for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2; pl.push(P(Math.cos(a) * 0.78, Math.sin(a) * 0.78, z + 0.007)); } fillPoly(pl, '#EFE6D2');
-  const pl2 = []; for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2; pl2.push(P(Math.cos(a) * 0.5, Math.sin(a) * 0.5, z + 0.008)); } fillPoly(pl2, '#E2D5BA');
+  // carretera hasta el muelle
+  const maxY = Math.max(1.5, ...act.filter(b => b.x0 <= 0.4 && b.x1 >= -0.4 || Math.abs(b.x0 - AVE) < 0.05 || Math.abs(b.x1 + AVE) < 0.05).map(b => b.y1));
+  rectW(-AVE, maxY - 0.2, AVE, isR0(Math.PI / 2, 5) - 0.1, z, ASF);
+  // plaza
+  const circ = (r, zz, col) => { const pl = []; for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2; pl.push(P(Math.cos(a) * r, Math.sin(a) * r, zz)); } fillPoly(pl, col); };
+  circ(1.15, z + 0.007, '#EFE6D2'); circ(0.6, z + 0.008, '#E2D5BA');
+  // caminitos de cada parcela hasta su calle
+  const lotsUsados = plan.usados;
+  for (const l of [...plan.items.filter(i => i.lot != null), ...plan.basics]) { const h = LOT / 2 + SETB + 0.04, wv = l.forma === 'basica' ? 0.07 : 0.13, dir = { S: [0, 1], N: [0, -1], E: [1, 0], W: [-1, 0] }[l.face];
+    if (dir[1]) rectW(l.x - wv, l.y + dir[1] * 0.12, l.x + wv, l.y + dir[1] * h, z + 0.002, CAM); else rectW(l.x + dir[0] * 0.12, l.y - wv, l.x + dir[0] * h, l.y + wv, z + 0.002, CAM); }
+  // caminos de tierra hasta los sitios especiales (en L hasta la calle más cercana del pueblo)
+  for (const e of plan.especiales) { if (e.forma === 'puerto' || e.x == null) continue;
+    let best = null, bd = 1e9; for (const l of lotsUsados) { const d = Math.hypot(l.x - e.x, l.y - e.y); if (d < bd) { bd = d; best = l; } }
+    if (!best) continue; const tx = best.x + Math.sign(e.x - best.x) * 0.8, ty = best.y + Math.sign(e.y - best.y) * 0.8, w = 0.14;
+    rectW(Math.min(e.x, tx) - w, e.y - w, Math.max(e.x, tx) + w, e.y + w, z + 0.001, TIERRA); rectW(tx - w, Math.min(e.y, ty) - w, tx + w, Math.max(e.y, ty) + w, z + 0.001, TIERRA); }
   ctx.restore();
 }
-function drawParks(plan, zf, push) { for (const l0 of plan.parks || []) { const [rx, ry] = rotXY(l0.x, l0.y), l = { x: rx, y: ry }, z = zf(l.x, l.y);
-  push(l.x + l.y - 0.2, () => drawTree({ x: l.x - 0.18, y: l.y - 0.1, s: 0.75 }, z)); push(l.x + l.y + 0.2, () => drawTree({ x: l.x + 0.15, y: l.y + 0.18, s: 0.6 }, z)); } }
-function zonaCentro(plan, k) { const L = plan.zonas[k]; if (!L || !L.length) return null; const xs = L.map(l => l.x), ys = L.map(l => l.y); return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2, top: { x: Math.min(...xs), y: Math.min(...ys) } }; }
+function drawParks(plan, zf, push) {
+  for (const a of plan.arboles || []) { const [x, y] = rotXY(a.x, a.y), z = zf(x, y); push(x + y, () => a.palm ? drawPalm({ x, y, s: a.s * 1.1 }, z) : drawTree({ x, y, s: a.s }, z)); }
+  for (const r of plan.rocas || []) { const [x, y] = rotXY(r.x, r.y); push(x + y, () => drawRock(x, y, Z_SAND - 0.02, r.s)); }
+}
+function zonaCentro(plan, k) { const L = k === 'bas' ? plan.basics : plan.items.filter(i => i.x != null); if (!L.length) return null; const xs = L.map(l => l.x), ys = L.map(l => l.y); return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 }; }
+/* sitios especiales más grandes */
+function drawCaveBig(o, z) { const [bx, by] = P(o.x, o.y, z); const u = U() * 1.7;
+  for (const [dx, dy, r, c] of [[-0.25, -0.05, 0.42, '#8C8A86'], [0.25, 0.0, 0.38, '#7E7B75'], [0, -0.25, 0.45, '#9A9790'], [0.05, -0.05, 0.36, '#8C8A86']]) { ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(bx + dx * u, by + dy * u, r * u, r * 0.75 * u, 0, Math.PI, 0); ctx.lineTo(bx + (dx + r) * u, by + (dy + 0.05) * u); ctx.lineTo(bx + (dx - r) * u, by + (dy + 0.05) * u); ctx.fill(); }
+  ctx.fillStyle = '#2A2622'; ctx.beginPath(); ctx.ellipse(bx + 0.02 * u, by + 0.02 * u, 0.15 * u, 0.2 * u, 0, Math.PI, 0); ctx.lineTo(bx + 0.17 * u, by + 0.05 * u); ctx.lineTo(bx - 0.13 * u, by + 0.05 * u); ctx.fill();
+  ctx.fillStyle = '#5BAA55'; for (const [dx, dy] of [[-0.4, -0.38], [0.1, -0.55], [0.36, -0.3], [-0.1, -0.45]]) { ctx.beginPath(); ctx.arc(bx + dx * u, by + dy * u, 0.07 * u, 0, 7); ctx.fill(); } }
+function drawGranja(o, z, t) {   // casita + campo de cultivo grande + cercado de caballos
+  const x = o.x, y = o.y;
+  const field = (x0, y0, x1, y1) => { fillPoly([P(x0, y0, z + 0.006), P(x1, y0, z + 0.006), P(x1, y1, z + 0.006), P(x0, y1, z + 0.006)], '#9A6B3F');
+    for (let yy = y0 + 0.1; yy < y1 - 0.05; yy += 0.18) fillPoly([P(x0 + 0.06, yy, z + 0.008), P(x1 - 0.06, yy, z + 0.008), P(x1 - 0.06, yy + 0.08, z + 0.008), P(x0 + 0.06, yy + 0.08, z + 0.008)], '#6DB85A'); };
+  field(x - 1.1, y - 1.0, x + 0.1, y + 0.1); field(x - 1.1, y + 0.25, x - 0.2, y + 1.0);
+  fillPoly([P(x + 0.3, y + 0.15, z + 0.005), P(x + 1.15, y + 0.15, z + 0.005), P(x + 1.15, y + 1.05, z + 0.005), P(x + 0.3, y + 1.05, z + 0.005)], '#A8D47F');
+  fenceLine(x + 0.3, y + 0.15, x + 1.15, y + 0.15, z); fenceLine(x + 0.3, y + 0.15, x + 0.3, y + 1.05, z);
+  drawHouseF({ x: x + 0.7, y: y - 0.55, w: 0.62, d: 0.5, h: 0.36, hr: 0.24, roof: '#B5452E', wall: '#F3E3C3' }, z, 'S');
+  box(x + 0.25, y - 0.95, 0.3, 0.3, 0.5, z, '#B5452E', { tcol: '#C9654E' });   // granero
+  drawHorse(x + 0.65, y + 0.5, z, t); drawHorse(x + 0.9, y + 0.8, z, t + 1.3);
+  fenceLine(x + 1.15, y + 0.15, x + 1.15, y + 1.05, z); fenceLine(x + 0.3, y + 1.05, x + 1.15, y + 1.05, z, [0.4, 0.6]);
+}
