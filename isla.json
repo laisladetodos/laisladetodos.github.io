@@ -435,8 +435,20 @@
    "detalles": [
     "bichon"
    ]
+  },
+  {
+   "tipo": "negocio",
+   "forma": "mascotas",
+   "dia": 5
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 5,
+   "color": "#8E5BC0",
+   "pared": "#E9DDF7"
   }
  ],
- "basicas": 118,
+ "basicas": 116,
  "nuevos_hoy": 65
 }

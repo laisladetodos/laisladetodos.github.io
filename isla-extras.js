@@ -193,6 +193,7 @@ function drawCustom(o, z, t) {
   if (f === 'lavanderia') return shopWithSign(o, z, o.color || '#9ED3F0', 'LAVANDERÍA', '#FFFFFF', o.pared || '#DDF1FB');
   if (f === 'super') return shopWithSign(o, z, '#2E9E5B', 'SUPER', '#FFFFFF', '#FFFFFF');
   if (f === 'peluqueria') return shopWithSign(o, z, '#B66DFF', 'PELUQUERÍA', '#FFFFFF', '#F6EEFF');
+  if (f === 'mascotas') return shopWithSign(o, z, '#2BA8A0', 'MASCOTAS', '#FFFFFF', '#E6F7F5');
   if ((o.det || o.detalles || []).includes('piscina')) {   // jardín propio con piscina, dentro de su parcela
     const g = 0.42; fillPoly([P(o.x - g, o.y - g, z + 0.006), P(o.x + g, o.y - g, z + 0.006), P(o.x + g, o.y + g, z + 0.006), P(o.x - g, o.y + g, z + 0.006)], '#86CC6E');
     fenceLine(o.x - g, o.y - g, o.x + g, o.y - g, z); fenceLine(o.x - g, o.y - g, o.x - g, o.y + g, z);
@@ -272,7 +273,7 @@ function alturaTejado(o) {   // [altura de la cumbrera, ¿tejado plano?]
   if (['tienda'].includes(f)) return [0.48, true];
   if (['bar'].includes(f)) return [0.44, true];
   if (['veterinario'].includes(f)) return [0.38, true];
-  if (['kebab', 'pizzeria', 'moviles', 'comisaria', 'restaurante', 'lavanderia', 'super', 'peluqueria'].includes(f)) return [0.42, true];
+  if (['kebab', 'pizzeria', 'moviles', 'comisaria', 'restaurante', 'lavanderia', 'super', 'peluqueria', 'mascotas'].includes(f)) return [0.42, true];
   if (f === 'perrera') return [0.68, false];
   if (f === 'tigre' || f === 'unicornio') return [0.74, false];
   if ((o.det || []).includes('piscina')) return [0.64, false];
@@ -431,7 +432,7 @@ function planCiudad(items, nBasic, seed) {
     const l = elegir(neg ? (q => q.dist * (1 + 0.12 * h2(q.i, 9)) - (q.main ? 1.2 : 0)) : (q => q.dist * (1 + 0.18 * h2(q.i, 11)) + (q.main ? 0.7 : 0)));
     if (l) { Object.assign(it, { x: l.x, y: l.y, face: l.face, lot: l.i }); usados.push(l);
       // a cada lado, una parcela libre de jardín: las casas no quedan pegadas
-      for (const m of T.lots) if (libres.has(m.i) && m.b === l.b && m.face === l.face && Math.hypot(m.x - l.x, m.y - l.y) < 1.2) { libres.delete(m.i); jardines.push(m); } }
+      for (const m of T.lots) if (libres.has(m.i) && m.b === l.b && m.face === l.face && Math.hypot(m.x - l.x, m.y - l.y) < 1.2) { libres.delete(m.i); jardines.push({ ...m, de: it.u || it.usuario }); } }
   }
   const basics = [];
   for (const l of [...T.lots].filter(l => libres.has(l.i) && enSectorBasico(l.th) && lejosEsp(l)).sort((a, b) => a.dist - b.dist)) { if (basics.length >= nBasic) break; const ns = l.face === 'N' || l.face === 'S';
@@ -485,7 +486,7 @@ function planCiudad(items, nBasic, seed) {
 function arbolesCampo(plan, seed) {
   const T = trazado(), out = [], occ = [...plan.usados.map(l => [l.x, l.y, 1.05]), ...plan.especiales.map(e => [e.x, e.y, e.forma === 'huerto' ? 1.9 : e.forma === 'arbol' ? 0.6 : 1.1]), [0, 0, 1.95], ...(plan.jardines || []).map(l => [l.x, l.y, 0.6])];
   const actB = plan.activos.map(bi => T.blocks[bi]);
-  for (const l of plan.jardines || []) { const k = l.i; out.push({ x: l.x + (h2(k, 31) - 0.5) * 0.3, y: l.y + (h2(k, 32) - 0.5) * 0.3, s: 0.5 + h2(k, 33) * 0.25 }); if (h2(k, 34) < 0.5) out.push({ x: l.x + (h2(k, 35) - 0.5) * 0.5, y: l.y + (h2(k, 36) - 0.5) * 0.5, s: 0.38 }); }
+  for (const l of plan.jardines || []) { const k = l.i; out.push({ x: l.x + (h2(k, 31) - 0.5) * 0.3, y: l.y + (h2(k, 32) - 0.5) * 0.3, s: 0.5 + h2(k, 33) * 0.25, de: l.de }); if (h2(k, 34) < 0.5) out.push({ x: l.x + (h2(k, 35) - 0.5) * 0.5, y: l.y + (h2(k, 36) - 0.5) * 0.5, s: 0.38, de: l.de }); }
   for (let k = 0; k < 8; k++) { const a = Math.PI / 4 + k * Math.PI / 2 + (k > 3 ? 0.35 : -0.35); out.push({ x: Math.cos(a) * 1.5, y: Math.sin(a) * 1.5, s: 0.55 }); }   // árboles de la plaza
   for (let i = -30; i <= 30; i++) for (let j = -30; j <= 30; j++) {
     const x = i * 0.75 + (h2(i, j, 1) - 0.5) * 0.5, y = j * 0.75 + (h2(i, j, 2) - 0.5) * 0.5, th = Math.atan2(y, x), r = Math.hypot(x, y);
