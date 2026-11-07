@@ -6,14 +6,14 @@
 
 /* ===== edificios orientados: face = 'S' (+y, cara izquierda visible), 'E' (+x, derecha visible), 'N'/'W' (de espaldas) ===== */
 function roofAlongY(x, y, w, d, z, h, hr, roof, wall) {
-  const ov = 0.07, xa = x - ov, xb = x + w + ov, ya = y - ov, yb = y + d + ov, zr = z + h, zt = z + h + hr, xm = x + w / 2, Y = y + d;
+  const ov = 0.03, xa = x - ov, xb = x + w + ov, ya = y, yb = y + d, zr = z + h, zt = z + h + hr, xm = x + w / 2, Y = y + d;
   fillPolyS([P(xa, ya, zr), P(xa, yb, zr), P(xm, yb, zt), P(xm, ya, zt)], shade(roof, -0.12));
   fillPolyS([P(x, Y, zr), P(x + w, Y, zr), P(xm, Y, zt)], wall);
   fillPolyS([P(xb, ya, zr), P(xb, yb, zr), P(xm, yb, zt), P(xm, ya, zt)], roof);
   const r1 = P(xm, ya, zt), r2 = P(xm, yb, zt); ctx.strokeStyle = shade(roof, 0.35); ctx.lineWidth = Math.max(1.5, U() * 0.025); ctx.beginPath(); ctx.moveTo(r1[0], r1[1]); ctx.lineTo(r2[0], r2[1]); ctx.stroke();
 }
 function roofAlongX(x, y, w, d, z, h, hr, roof, wall) {
-  const ov = 0.07, xa = x - ov, xb = x + w + ov, ya = y - ov, yb = y + d + ov, zr = z + h, zt = z + h + hr, ym = y + d / 2, X = x + w;
+  const ov = 0.03, xa = x, xb = x + w, ya = y - ov, yb = y + d + ov, zr = z + h, zt = z + h + hr, ym = y + d / 2, X = x + w;
   fillPolyS([P(xa, ya, zr), P(xb, ya, zr), P(xb, ym, zt), P(xa, ym, zt)], shade(roof, -0.12));
   fillPolyS([P(X, y, zr), P(X, y + d, zr), P(X, ym, zt)], shade(wall, -0.18));
   fillPolyS([P(xa, yb, zr), P(xb, yb, zr), P(xb, ym, zt), P(xa, ym, zt)], roof);
@@ -53,9 +53,12 @@ function drawShopF(o, z, face) {
   } else if (face === 'E') {
     fillPoly(faceR(y + d * 0.1, y + d * 0.9, z, z + h * 0.55, X), shade(C.glass, -0.15)); fillPoly(faceR(y + d * 0.42, y + d * 0.58, z, z + h * 0.55, X), shade(C.glass, -0.35));
     for (let i = 0; i < n; i++) { const ya = y + d * i / n, yb = y + d * (i + 1) / n; fillPolyS([P(X, ya, z + h * 0.78), P(X, yb, z + h * 0.78), P(X + 0.16, yb, z + h * 0.6), P(X + 0.16, ya, z + h * 0.6)], i % 2 ? '#EDEDED' : shade(col, -0.12)); }
+  } else if (!rot) {   // vista trasera: ventana y toldo de la terraza de atrás
+    fillPoly(faceL(x + w * 0.2, x + w * 0.8, z + h * 0.18, z + h * 0.55, Y), C.glass);
+    for (let i = 0; i < n; i++) { const xa = x + w * (0.12 + 0.76 * i / n), xb = x + w * (0.12 + 0.76 * (i + 1) / n); fillPolyS([P(xa, Y, z + h * 0.72), P(xb, Y, z + h * 0.72), P(xb, Y + 0.12, z + h * 0.58), P(xa, Y + 0.12, z + h * 0.58)], i % 2 ? '#FFFFFF' : col); }
   } else {
-    fillPoly(faceL(x + w * 0.4, x + w * 0.6, z + h * 0.3, z + h * 0.6, Y), C.glass);
-    if (rot) fillPoly(faceR(y + d * 0.4, y + d * 0.6, z + h * 0.3, z + h * 0.6, X), shade(C.glass, -0.2));
+    fillPoly(faceR(y + d * 0.2, y + d * 0.8, z + h * 0.18, z + h * 0.55, X), shade(C.glass, -0.15));
+    for (let i = 0; i < n; i++) { const ya = y + d * (0.12 + 0.76 * i / n), yb = y + d * (0.12 + 0.76 * (i + 1) / n); fillPolyS([P(X, ya, z + h * 0.72), P(X, yb, z + h * 0.72), P(X + 0.12, yb, z + h * 0.58), P(X + 0.12, ya, z + h * 0.58)], i % 2 ? '#EDEDED' : shade(col, -0.12)); }
   }
 }
 
@@ -100,11 +103,6 @@ function drawPuerto(o, z) {
   const a = o.ang ?? 0, cx = Math.cos(a), cy = Math.sin(a), u = U();
   for (let i = 0; i < 12; i++) { const k = i * 0.22; box(o.x + cx * k - 0.2, o.y + cy * k - 0.2, 0.4, 0.4, 0.06, z - 0.02, i % 2 ? '#B9824E' : C.wood, { tcol: i % 2 ? '#C9925E' : '#D6A06A' }); }
   for (const s of [-1, 1]) for (const k of [1.2, 2.3]) { box(o.x + cx * k - cy * 0.17 * s - 0.03, o.y + cy * k + cx * 0.17 * s - 0.03, 0.06, 0.06, 0.22, z - 0.12, C.woodDark); }
-  // barquita amarrada
-  const bxw = o.x + cx * 0.75 - cy * 0.45, byw = o.y + cy * 0.75 + cx * 0.45; const [px, py] = P(bxw, byw, Z_SAND - 0.12);
-  ctx.fillStyle = '#F2614C'; ctx.beginPath(); ctx.moveTo(px - 0.3 * u, py - 0.08 * u); ctx.lineTo(px + 0.3 * u, py - 0.08 * u); ctx.lineTo(px + 0.2 * u, py + 0.06 * u); ctx.lineTo(px - 0.22 * u, py + 0.06 * u); ctx.fill();
-  ctx.fillStyle = '#FFFFFF'; ctx.fillRect(px - 0.08 * u, py - 0.24 * u, 0.16 * u, 0.16 * u);
-  ctx.fillStyle = C.navy; ctx.fillRect(px - 0.005 * u, py - 0.42 * u, 0.012 * u, 0.2 * u);
   const [sx, sy] = P(o.x - cy * 0.25, o.y + cx * 0.25, z); signBoard(o.x - cy * 0.25, o.y + cx * 0.25, z, '#FFFFFF', 'PUERTO');
 }
 function drawRestaurant(o, z) {
@@ -248,8 +246,13 @@ function barrioSlots(R, ocupados, n, seed) {
 /* ================= CIUDAD: zonas, manzanas, calles y forma de la isla ================= */
 const _islandR0 = islandR;
 let CITY = null;            // { shape: Float64Array, SR }
+let VIEW_ROT = 0;           // giro de la vista en pasos de 90° (solo la web; los vídeos usan 0)
+function rotXY(x, y) { switch (((VIEW_ROT % 4) + 4) % 4) { case 0: return [x, y]; case 1: return [-y, x]; case 2: return [-x, -y]; default: return [y, -x]; } }
+const FACES = ['S', 'W', 'N', 'E'];
+function rotFace(f) { if (!f) return f; return FACES[(FACES.indexOf(f) + ((VIEW_ROT % 4) + 4) % 4) % 4]; }
 window.islandR = function (th, R, seed) {
   if (!CITY) return _islandR0(th, R, seed);
+  th -= VIEW_ROT * Math.PI / 2;
   const N = CITY.shape.length; let f = (((th / (2 * Math.PI)) % 1) + 1) % 1 * N;
   const i = Math.floor(f) % N, j = (i + 1) % N, a = f - Math.floor(f), v = CITY.shape[i] * (1 - a) + CITY.shape[j] * a;
   if (Math.abs(seed - (CITY.seed + 1.3)) < 1e-9) { const k = R / grassRad(CITY.SR); return Math.max(0.1, (v - 0.38) * k); }   // hierba casi hasta la orilla
@@ -284,6 +287,7 @@ function zonaLots(q, n) {
   return out;
 }
 function planCiudad(items, nBasic, seed) {
+  const _vr = VIEW_ROT; VIEW_ROT = 0;
   CITY = null;
   const grupos = { com: [], resA: [], resB: [] }; let puerto = null, nr = 0; const orden = ['com', 'resA', 'resB'];
   for (const it of items) { if (it.forma === 'puerto') { puerto = it; continue; } grupos[orden[nr++ % 3]].push(it); }
@@ -319,9 +323,17 @@ function planCiudad(items, nBasic, seed) {
   const SR = 5; CITY = { shape: sh, SR, seed };
   // el puerto es el muelle del ferry (uno solo); su dueño lo va mejorando como cualquier construcción
   if (puerto) { const r = islandR(Math.PI / 2, SR, seed); Object.assign(puerto, { x: 0, y: r - 0.3, ang: Math.PI / 2, zona: 'puerto' }); }
+  VIEW_ROT = _vr;
   return { items, basics, zonas, parks, SR };
 }
-function rectW(x0, y0, x1, y1, z, col) { fillPoly([P(x0, y0, z), P(x1, y0, z), P(x1, y1, z), P(x0, y1, z)], col); }
+function rectW(x0, y0, x1, y1, z, col) { const a = rotXY(x0, y0), b = rotXY(x1, y1), X0 = Math.min(a[0], b[0]), X1 = Math.max(a[0], b[0]), Y0 = Math.min(a[1], b[1]), Y1 = Math.max(a[1], b[1]);
+  fillPoly([P(X0, Y0, z), P(X1, Y0, z), P(X1, Y1, z), P(X0, Y1, z)], col); }
+function isR0(th, R) { return islandR(th + VIEW_ROT * Math.PI / 2, R, 0); }   // radio en el marco original
+function drawPierR(rc, z) {   // muelle del ferry, girable
+  const w = 0.46, y0 = rc - 0.35, a = rotXY(-w / 2, y0), b = rotXY(w / 2, y0 + PIER_LEN);
+  box(Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]), 0.05, z - 0.06, C.wood, { tcol: '#C98C57' });
+  for (const [px, py] of [[-w / 2, y0 + PIER_LEN], [w / 2, y0 + PIER_LEN], [w / 2, y0 + PIER_LEN * 0.5]]) { const [qx, qy] = rotXY(px, py); box(qx - 0.05, qy - 0.05, 0.1, 0.1, 0.2, z - 0.1, C.woodDark); }
+}
 function drawCityGround(plan, zf, alpha = 1) {
   if (alpha <= 0) return; ctx.save(); ctx.globalAlpha = alpha;
   const z = zf(0, 0) + 0.004, ASF = '#A9AFAB', ACERA = '#D9D3C4', CAMINO = '#E2D9C6';
@@ -343,16 +355,22 @@ function drawCityGround(plan, zf, alpha = 1) {
       if (l.face === 'W') W2(l.x - 0.12, l.x - h, l.y - wv, l.y + wv, z + 0.002, CAMINO); }
   }
   // avenidas en cruz (con aceras) y plaza
-  const R = CITY ? CITY.SR : 3; const ye = islandR(Math.PI / 2, R, 0) - 0.1, yb = -islandR(-Math.PI / 2, R, 0) + 0.35, xe = islandR(0, R, 0) - 0.35, xb = -islandR(Math.PI, R, 0) + 0.35;
+  const R = CITY ? CITY.SR : 3; const ext = { px: 1.2, nx: 1.2, ny: 1.2 };
+  for (const k in plan.zonas) { const q = ZONAS[k], L = plan.zonas[k]; if (!L.length) continue;
+    const mbi = Math.max(...L.map(l => Math.floor(l.c / q.b))), mbj = Math.max(...L.map(l => Math.floor(l.r / q.b)));
+    const far = n => CITY_OFF + n * q.b * q.p + (n - 0.5) * q.s + q.s / 2;
+    if (q.sx > 0) ext.px = Math.max(ext.px, far(mbi + 1)); else ext.nx = Math.max(ext.nx, far(mbi + 1));
+    if (q.sy < 0) ext.ny = Math.max(ext.ny, far(mbj + 1)); }
+  const ye = isR0(Math.PI / 2, R) - 0.1, yb = -Math.min(ext.ny, isR0(-Math.PI / 2, R) - 0.35), xe = Math.min(ext.px, isR0(0, R) - 0.35), xb = -Math.min(ext.nx, isR0(Math.PI, R) - 0.35);
   rectW(-AVE - 0.08, yb, AVE + 0.08, ye, z + 0.004, ACERA); rectW(xb, -AVE - 0.08, xe, AVE + 0.08, z + 0.004, ACERA);
   rectW(-AVE, yb, AVE, ye, z + 0.005, ASF); rectW(xb, -AVE, xe, AVE, z + 0.005, ASF);
   ctx.setLineDash([U() * 0.12, U() * 0.12]); ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = Math.max(1, U() * 0.025);
-  for (const [a, b] of [[[0, 0.9], [0, ye]], [[0, -0.9], [0, yb]], [[0.9, 0], [xe, 0]], [[-0.9, 0], [xb, 0]]]) { ctx.beginPath(); const p0 = P(a[0], a[1], z + 0.006), p1 = P(b[0], b[1], z + 0.006); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }
+  for (const [a, b] of [[[0, 0.9], [0, ye - 0.3]], [[0, -0.9], [0, yb + 0.3]], [[0.9, 0], [xe - 0.3, 0]], [[-0.9, 0], [xb + 0.3, 0]]]) { ctx.beginPath(); const ra = rotXY(a[0], a[1]), rb = rotXY(b[0], b[1]), p0 = P(ra[0], ra[1], z + 0.006), p1 = P(rb[0], rb[1], z + 0.006); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }
   ctx.setLineDash([]);
   const pl = []; for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2; pl.push(P(Math.cos(a) * 0.78, Math.sin(a) * 0.78, z + 0.007)); } fillPoly(pl, '#EFE6D2');
   const pl2 = []; for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2; pl2.push(P(Math.cos(a) * 0.5, Math.sin(a) * 0.5, z + 0.008)); } fillPoly(pl2, '#E2D5BA');
   ctx.restore();
 }
-function drawParks(plan, zf, push) { for (const l of plan.parks || []) { const z = zf(l.x, l.y);
+function drawParks(plan, zf, push) { for (const l0 of plan.parks || []) { const [rx, ry] = rotXY(l0.x, l0.y), l = { x: rx, y: ry }, z = zf(l.x, l.y);
   push(l.x + l.y - 0.2, () => drawTree({ x: l.x - 0.18, y: l.y - 0.1, s: 0.75 }, z)); push(l.x + l.y + 0.2, () => drawTree({ x: l.x + 0.15, y: l.y + 0.18, s: 0.6 }, z)); } }
 function zonaCentro(plan, k) { const L = plan.zonas[k]; if (!L || !L.length) return null; const xs = L.map(l => l.x), ys = L.map(l => l.y); return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2, top: { x: Math.min(...xs), y: Math.min(...ys) } }; }
