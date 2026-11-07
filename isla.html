@@ -54,8 +54,8 @@ a.btn:focus-visible,button:focus-visible{outline:3px solid var(--yellow);outline
   <div class="who" id="cWho"></div>
   <div class="meta" id="cMeta"></div>
 </div>
-<script src="isla-lib.js?v=1794019173"></script>
-<script src="isla-extras.js?v=1794019173"></script>
+<script src="isla-lib.js?v=1794019322"></script>
+<script src="isla-extras.js?v=1794019322"></script>
 <script>
 'use strict';
 const SEED = 1.7;
@@ -139,7 +139,8 @@ function frame(ts) {
   drawSea(t, R); drawShore(R, SEED, t); if (SOLO_ARENA()) extrude(islandPts(R, SEED), 0, Z_SAND, C.sand, C.sandSide); else drawIsland(R, SEED);
   const rc = islandR(Math.PI / 2, R, SEED);
   const rc0 = isR0(Math.PI / 2, R);
-  drawPierR(rc0, Z_SAND);
+  const fsc = ferryScale(ISLA.nuevos_hoy);
+  drawPierR(rc0, Z_SAND, pierLen(fsc));
   if (PLAN) drawCityGround(PLAN, (x, y) => SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED));
   const list = [{ d: -0.75, f: () => drawObj({ type: 'palm', x: 0, y: 0, s: 1.1, z: SOLO_ARENA() ? Z_SAND : groundZ(0, 0, R, SEED) }, t, R, SEED) }];
   if (PLAN) drawParks(PLAN, (x, y) => SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED), (d, f) => list.push({ d, f }));
@@ -151,7 +152,7 @@ function frame(ts) {
     const th = Math.atan2(y, x), lim = islandR(th, R, SEED) - 0.3; if (Math.hypot(x, y) > lim) { x *= lim / Math.hypot(x, y); y *= lim / Math.hypot(x, y); }
     list.push({ d: x + y + 0.01, f: () => drawPerson(x, y, groundZ(x, y, R, SEED), p.col, t, 1.1, t * 8 + k) });
   });
-  if (VIEW_ROT % 4 === 0) { const [fx, fy] = ferryXY(rc0); list.push({ d: fx + fy - 0.3, f: () => drawFerry(fx, fy, Math.sin(t * 2.2) * 0.015, t) }); }
+  if (VIEW_ROT % 4 === 0) { const [fx, fy] = ferryXY(rc0, fsc); list.push({ d: fx + fy - 0.3, f: () => drawFerryS(fx, fy, Math.sin(t * 2.2) * 0.015, t, fsc) }); }
   // nombres integrados: una placa pequeña clavada delante del edificio (se lee al acercar; no tapa nada)
   for (const o of objs) if (o.data.usuario) list.push({ d: o.x + o.y + 0.42, f: () => placa(o) });
   list.sort((a, b) => a.d - b.d); for (const o of list) o.f();

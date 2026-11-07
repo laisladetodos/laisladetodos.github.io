@@ -259,7 +259,11 @@ window.islandR = function (th, R, seed) {
   return v * R / CITY.SR;
 };
 const FERRY_DX = 0.95, FERRY_DY = 1.95, PIER_LEN = 2.7;   // ferry atracado entero en el agua, junto al muelle largo
-function ferryXY(rc) { return [FERRY_DX, rc + FERRY_DY]; }
+// el ferry crece con la gente nueva que trae ese día (1 → pequeño; ~70 → x1.45; 300+ → grande)
+function ferryScale(nuevos) { return clamp(0.75 + Math.sqrt(Math.max(0, nuevos || 0)) / 12, 0.75, 2.0); }
+function ferryXY(rc, s = 1) { return [0.25 + 0.7 * s, rc + 0.55 + 1.4 * s]; }
+function pierLen(s = 1) { return PIER_LEN * Math.max(1, 0.35 + 0.75 * s); }
+function drawFerryS(fx, fy, z, t, s = 1, alpha = 1) { const [ax, ay] = P(fx, fy, 0); ctx.save(); ctx.translate(ax, ay); ctx.scale(s, s); ctx.translate(-ax, -ay); drawFerry(fx, fy, z, t, alpha); ctx.restore(); }
 const ZONAS = {
   com:  { sx: 1, sy: 1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DEL MUELLE', pad: '#E9E2D0', mix: true },
   resA: { sx: -1, sy: 1, p: 0.95, s: 0.42, b: 2, nombre: 'BARRIO DE LAS PALMERAS', pad: '#E6EAD6', mix: true },
@@ -329,10 +333,10 @@ function planCiudad(items, nBasic, seed) {
 function rectW(x0, y0, x1, y1, z, col) { const a = rotXY(x0, y0), b = rotXY(x1, y1), X0 = Math.min(a[0], b[0]), X1 = Math.max(a[0], b[0]), Y0 = Math.min(a[1], b[1]), Y1 = Math.max(a[1], b[1]);
   fillPoly([P(X0, Y0, z), P(X1, Y0, z), P(X1, Y1, z), P(X0, Y1, z)], col); }
 function isR0(th, R) { return islandR(th + VIEW_ROT * Math.PI / 2, R, 0); }   // radio en el marco original
-function drawPierR(rc, z) {   // muelle del ferry, girable
-  const w = 0.46, y0 = rc - 0.35, a = rotXY(-w / 2, y0), b = rotXY(w / 2, y0 + PIER_LEN);
+function drawPierR(rc, z, len = PIER_LEN) {   // muelle del ferry, girable
+  const w = 0.46, y0 = rc - 0.35, a = rotXY(-w / 2, y0), b = rotXY(w / 2, y0 + len);
   box(Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]), 0.05, z - 0.06, C.wood, { tcol: '#C98C57' });
-  for (const [px, py] of [[-w / 2, y0 + PIER_LEN], [w / 2, y0 + PIER_LEN], [w / 2, y0 + PIER_LEN * 0.5]]) { const [qx, qy] = rotXY(px, py); box(qx - 0.05, qy - 0.05, 0.1, 0.1, 0.2, z - 0.1, C.woodDark); }
+  for (const [px, py] of [[-w / 2, y0 + len], [w / 2, y0 + len], [w / 2, y0 + len * 0.5]]) { const [qx, qy] = rotXY(px, py); box(qx - 0.05, qy - 0.05, 0.1, 0.1, 0.2, z - 0.1, C.woodDark); }
 }
 function drawCityGround(plan, zf, alpha = 1) {
   if (alpha <= 0) return; ctx.save(); ctx.globalAlpha = alpha;
