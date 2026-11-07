@@ -422,13 +422,16 @@ function planCiudad(items, nBasic, seed) {
   const T = trazado(), libres = new Set(T.lots.map(l => l.i)), usados = [];
   const especiales = items.filter(it => ESPECIALES.includes(it.forma));
   const lejosEsp = l => especiales.every(e => e.x == null || Math.hypot(e.x - l.x, e.y - l.y) > (e.forma === 'huerto' ? 2.4 : 1.7));
-  for (const l of T.lots) if (l.dist < 1.25) libres.delete(l.i);                                  // plaza
+  for (const l of T.lots) if (l.dist < 1.95) libres.delete(l.i);                                  // plaza grande y abierta
+  const jardines = [];
   const elegir = score => { let best = null, bs = 1e9; for (const i of libres) { const l = T.lots[i]; if (enSectorBasico(l.th) && l.dist > 1.8) continue; if (!lejosEsp(l)) continue; const s = score(l); if (s < bs) { bs = s; best = l; } } if (best) libres.delete(best.i); return best; };
   for (const it of items) {
     if (ESPECIALES.includes(it.forma)) continue;
     const neg = !['casa', 'tigre', 'unicornio'].includes(it.forma || 'casa');
     const l = elegir(neg ? (q => q.dist * (1 + 0.12 * h2(q.i, 9)) - (q.main ? 1.2 : 0)) : (q => q.dist * (1 + 0.18 * h2(q.i, 11)) + (q.main ? 0.7 : 0)));
-    if (l) { Object.assign(it, { x: l.x, y: l.y, face: l.face, lot: l.i }); usados.push(l); }
+    if (l) { Object.assign(it, { x: l.x, y: l.y, face: l.face, lot: l.i }); usados.push(l);
+      // a cada lado, una parcela libre de jardín: las casas no quedan pegadas
+      for (const m of T.lots) if (libres.has(m.i) && m.b === l.b && m.face === l.face && Math.hypot(m.x - l.x, m.y - l.y) < 1.2) { libres.delete(m.i); jardines.push(m); } }
   }
   const basics = [];
   for (const l of [...T.lots].filter(l => libres.has(l.i) && enSectorBasico(l.th) && lejosEsp(l)).sort((a, b) => a.dist - b.dist)) { if (basics.length >= nBasic) break; const ns = l.face === 'N' || l.face === 'S';
@@ -438,9 +441,9 @@ function planCiudad(items, nBasic, seed) {
   const N = 180, ang = i => i / N * 2 * Math.PI, dif = (a, b) => Math.abs(((a - b + Math.PI * 3) % (2 * Math.PI)) - Math.PI);
   const town = new Float64Array(N).fill(1.6);
   const marca = (x, y, m, arr) => { const d = Math.hypot(x, y), th = Math.atan2(y, x), w = Math.atan2(m, Math.max(0.01, d)); for (let i = 0; i < N; i++) { const dd = dif(ang(i), th); if (dd < w) arr[i] = Math.max(arr[i], (d + m) * Math.cos(dd)); } };
-  for (const l of usados) marca(l.x, l.y, 0.9, town);
+  for (const l of [...usados, ...jardines]) marca(l.x, l.y, 0.9, town);
   // bloques activos (para calles) y su contorno
-  const activos = new Set(usados.map(l => l.b));
+  const activos = new Set([...usados, ...jardines].map(l => l.b));
   for (const bi of activos) { const b = T.blocks[bi]; for (const [x, y] of [[b.x0, b.y0], [b.x1, b.y0], [b.x0, b.y1], [b.x1, b.y1]]) marca(x, y, 0.7, town); }
   for (const [x0, y0, x1, y1] of callesActivas([...activos])) { const n = Math.ceil(Math.max(x1 - x0, y1 - y0) / 0.3); for (let k = 0; k <= n; k++) { const q = k / n; for (const [x, y] of [[x0 + (x1 - x0) * q, y0], [x0 + (x1 - x0) * q, y1], [x0, y0 + (y1 - y0) * q], [x1, y0 + (y1 - y0) * q]]) marca(x, y, 0.45, town); } }   // la isla siempre cubre las calles
   // forma de la isla: el pueblo + bastante campo alrededor, con cabos y calas
@@ -474,14 +477,16 @@ function planCiudad(items, nBasic, seed) {
   CITY.shape = sh;
   for (const e of especiales) { if (e.forma === 'puerto') e.y = R(Math.PI / 2) - 0.3; if (e.forma === 'torre') e.face = e.x < 0 ? 'E' : 'W';
     if (e.th != null) { const r = R(e.th) - anchoCosta(e.th) - (e.forma === 'cueva' ? 0.5 : 0.45); e.x = Math.cos(e.th) * r; e.y = Math.sin(e.th) * r; } }
-  const plan = { items, basics, especiales, activos: [...activos], usados, SR: 5, zonas: { bas: basics } };
+  const plan = { items, basics, especiales, activos: [...activos], usados, jardines, SR: 5, zonas: { bas: basics } };
   plan.arboles = arbolesCampo(plan, seed); plan.rocas = rocasCosta();
   VIEW_ROT = _vr;
   return plan;
 }
 function arbolesCampo(plan, seed) {
-  const T = trazado(), out = [], occ = [...plan.usados.map(l => [l.x, l.y, 1.05]), ...plan.especiales.map(e => [e.x, e.y, e.forma === 'huerto' ? 1.9 : e.forma === 'arbol' ? 0.6 : 1.1]), [0, 0, 1.4]];
+  const T = trazado(), out = [], occ = [...plan.usados.map(l => [l.x, l.y, 1.05]), ...plan.especiales.map(e => [e.x, e.y, e.forma === 'huerto' ? 1.9 : e.forma === 'arbol' ? 0.6 : 1.1]), [0, 0, 1.95], ...(plan.jardines || []).map(l => [l.x, l.y, 0.6])];
   const actB = plan.activos.map(bi => T.blocks[bi]);
+  for (const l of plan.jardines || []) { const k = l.i; out.push({ x: l.x + (h2(k, 31) - 0.5) * 0.3, y: l.y + (h2(k, 32) - 0.5) * 0.3, s: 0.5 + h2(k, 33) * 0.25 }); if (h2(k, 34) < 0.5) out.push({ x: l.x + (h2(k, 35) - 0.5) * 0.5, y: l.y + (h2(k, 36) - 0.5) * 0.5, s: 0.38 }); }
+  for (let k = 0; k < 8; k++) { const a = Math.PI / 4 + k * Math.PI / 2 + (k > 3 ? 0.35 : -0.35); out.push({ x: Math.cos(a) * 1.5, y: Math.sin(a) * 1.5, s: 0.55 }); }   // árboles de la plaza
   for (let i = -30; i <= 30; i++) for (let j = -30; j <= 30; j++) {
     const x = i * 0.75 + (h2(i, j, 1) - 0.5) * 0.5, y = j * 0.75 + (h2(i, j, 2) - 0.5) * 0.5, th = Math.atan2(y, x), r = Math.hypot(x, y);
     if (r > islandR(th, 5, seed) - anchoCosta(th) - 0.3) continue;
@@ -552,7 +557,7 @@ function drawCityGround(plan, zf, alpha = 1) {
   for (const [x0, y0, x1, y1] of calles) rectW(x0, y0, x1, y1, z + 0.002, ASF);
   // plaza
   const circ = (r, zz, col) => { const pl = []; for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2; pl.push(P(Math.cos(a) * r, Math.sin(a) * r, zz)); } fillPoly(pl, col); };
-  circ(1.15, z + 0.007, '#EFE6D2'); circ(0.6, z + 0.008, '#E2D5BA');
+  circ(1.7, z + 0.007, '#EFE6D2'); circ(1.25, z + 0.0075, '#E7DCC4'); circ(0.6, z + 0.008, '#E2D5BA');
   // caminitos de cada parcela hasta su calle
   for (const l of [...plan.items.filter(i => i.lot != null), ...plan.basics]) { const h = LOT / 2 + SETB + 0.02, wv = l.forma === 'basica' ? 0.07 : 0.13, dir = { S: [0, 1], N: [0, -1], E: [1, 0], W: [-1, 0] }[l.face];
     if (dir[1]) rectW(l.x - wv, Math.min(l.y + dir[1] * 0.12, l.y + dir[1] * h), l.x + wv, Math.max(l.y + dir[1] * 0.12, l.y + dir[1] * h), z + 0.001, CAM); else rectW(Math.min(l.x + dir[0] * 0.12, l.x + dir[0] * h), l.y - wv, Math.max(l.x + dir[0] * 0.12, l.x + dir[0] * h), l.y + wv, z + 0.001, CAM); }
