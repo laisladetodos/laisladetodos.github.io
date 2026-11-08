@@ -187,14 +187,21 @@ function drawCustom(o, z, t) {
   if (f === 'tienda') return drawShopF({ x: o.x, y: o.y, col: o.color }, z, o.face);
   if (f === 'basica') return drawBasic(o, z);
   if (f === 'unicornio') return drawUnicornio(o, z);
-  if (f === 'tigre') return drawTigre(o, z);
+  if (f === 'tigre') { if (!(o.det || o.detalles || []).includes('minipiscina')) return drawTigre(o, z);
+    // piscina dentro de su parcela: la casa se echa un poco atrás y a un lado, la piscina delante (más grande que los tigres)
+    const vis = (o.face === 'N' || o.face === 'W') ? -1 : 1, [f, sd] = FRENTE[o.face || 'S'];
+    const c = (a, b, zz) => P(o.x + f[0] * a * vis + sd[0] * b, o.y + f[1] * a * vis + sd[1] * b, zz);
+    fillPoly([c(0.13, 0.14, z + 0.008), c(0.45, 0.14, z + 0.008), c(0.45, 0.47, z + 0.008), c(0.13, 0.47, z + 0.008)], '#FFFFFF');
+    fillPoly([c(0.16, 0.17, z + 0.01), c(0.42, 0.17, z + 0.01), c(0.42, 0.44, z + 0.01), c(0.16, 0.44, z + 0.01)], '#4FC3E8');
+    fillPoly([c(0.16, 0.17, z + 0.011), c(0.42, 0.17, z + 0.011), c(0.42, 0.22, z + 0.011), c(0.16, 0.22, z + 0.011)], '#7FD6F0');
+    const [hx, hy] = enFrente(o, -0.16 * vis, -0.2); return drawTigre({ ...o, x: hx, y: hy, s: 0.85 }, z); }
   if (f === 'torre') return drawTorre(o, z);
   if (f === 'huerto') return drawGranja(o, z, t);
   if (f === 'lavanderia') return shopWithSign(o, z, o.color || '#9ED3F0', 'LAVANDERÍA', '#FFFFFF', o.pared || '#DDF1FB');
   if (f === 'super') return shopWithSign(o, z, '#2E9E5B', 'SUPER', '#FFFFFF', '#FFFFFF');
   if (f === 'peluqueria') return shopWithSign(o, z, '#B66DFF', 'PELUQUERÍA', '#FFFFFF', '#F6EEFF');
   if (f === 'mascotas') return shopWithSign(o, z, '#2BA8A0', 'MASCOTAS', '#FFFFFF', '#E6F7F5');
-  if (f === 'kayaks') { shopWithSign(o, z, '#F28C28', 'KAYAKS', '#FFFFFF', '#FFF1E0'); const [kx, ky] = enFrente(o, 0.36, 0.3); for (const [k, col] of [[0, '#E8384F'], [1, '#FFC83D']]) { const a = P(kx - 0.16, ky + k * 0.07, z + 0.03 + k * 0.05), b = P(kx + 0.16, ky + k * 0.07, z + 0.03 + k * 0.05); const u = U(); ctx.strokeStyle = col; ctx.lineWidth = u * 0.05; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke(); } return; }
+  if (f === 'kayaks') { shopWithSign(o, z, '#F28C28', 'KAYAKS', '#FFFFFF', '#FFF1E0'); return; }
   if (f === 'carniceria') return shopWithSign(o, z, '#B5452E', 'CARNICERÍA', '#FFFFFF', '#FBEDE8');
   if (f === 'churreria') return shopWithSign(o, z, '#E9A93B', 'CHURROS', '#FFF3D6', '#FFF6E6');
   if (f === 'cuartel') { shopWithSign(o, z, '#5B6B3A', 'CUARTEL', '#E9EDDC', '#C9C3A6'); const [bx, by] = enFrente(o, 0.4, -0.28); for (let i = 0; i < 3; i++) box(bx - 0.08 + i * 0.055, by - 0.03, 0.05, 0.06, 0.05, z, '#B9A77A'); const [fx, fy] = enFrente(o, 0.36, 0.3); drawFlag(fx, fy, z, t, 'espana'); return; }
@@ -286,6 +293,17 @@ function alturaTejado(o) {   // [altura de la cumbrera, ¿tejado plano?]
   if ((o.det || []).includes('piscina')) return [0.64, false];
   return [0.72, false];
 }
+function drawKayaks(o, z, vis = 1) {   // dos kayaks de colores apoyados en un soporte delante de la tienda, con un remo
+  const [f, sd] = FRENTE[o.face || 'S'];
+  const at = (a, b, h) => P(o.x + f[0] * a * vis + sd[0] * b, o.y + f[1] * a * vis + sd[1] * b, z + h);
+  for (const b of [-0.3, 0.3]) { const [p, q] = [at(0.5, b, 0), at(0.5, b, 0.16)]; ctx.strokeStyle = '#7A5230'; ctx.lineWidth = Math.max(1.5, U() * 0.025); ctx.beginPath(); ctx.moveTo(...p); ctx.lineTo(...q); ctx.stroke(); }
+  [[0.1, '#E8384F'], [0.17, '#FFC83D']].forEach(([h, col], k) => { const a = 0.47 + k * 0.07, L = 0.42, Wd = 0.065, pts = [];
+    for (let i = 0; i <= 12; i++) { const q = i / 12 * 2 - 1; pts.push(at(a + Wd * Math.sqrt(1 - q * q), q * L, h)); }
+    for (let i = 12; i >= 0; i--) { const q = i / 12 * 2 - 1; pts.push(at(a - Wd * Math.sqrt(1 - q * q), q * L, h)); }
+    fillPoly(pts, col); const c = [at(a, -0.08, h + 0.005), at(a, 0.08, h + 0.005)]; ctx.strokeStyle = '#2B2B2B'; ctx.lineWidth = Math.max(2, U() * 0.04); ctx.beginPath(); ctx.moveTo(...c[0]); ctx.lineTo(...c[1]); ctx.stroke(); });
+  const r0 = at(0.62, -0.45, 0.02), r1 = at(0.62, -0.05, 0.02); ctx.strokeStyle = '#3B3B3B'; ctx.lineWidth = Math.max(1.5, U() * 0.02); ctx.beginPath(); ctx.moveTo(...r0); ctx.lineTo(...r1); ctx.stroke();
+  for (const r of [r0, r1]) { ctx.fillStyle = '#2E8FA8'; ctx.beginPath(); ctx.ellipse(r[0], r[1], U() * 0.04, U() * 0.02, 0, 0, 7); ctx.fill(); }
+}
 function drawTerrazaF(o, z, col) {   // mesas con sombrilla delante del local, en el suelo
   for (const k of [-1, 1]) {
     const [tx, ty] = enFrente(o, 0.5, k * 0.2), u = U();
@@ -327,8 +345,9 @@ function drawDetails(o, z, t, push) {   // push(d, fn): cada detalle con su prop
     if (d === 'hamster') suelo((x, y) => drawHamster(x, y, z, t, 1.4));
     if (d === 'moto') { const [x, y] = enFrente(o, 0.45, 0.36); put(x + y, () => drawMoto(x, y, z)); }
     if (d === 'terraza') { const [x, y] = enFrente(o, 0.5, 0); put(x + y, () => drawTerrazaF(o, z)); }
-    if (d === 'tigres') { cat('#F28C28', 1.6); cat('#F28C28', 1.4); }
-    if (d === 'minipiscina' || d === 'pez') { const [x, y] = enFrente(o, 0.44 * vis, d === 'pez' ? 0.3 : -0.28); put(x + y - 0.2, () => { const [cx, cy] = P(x, y, z + 0.008), u = U(); ctx.fillStyle = d === 'pez' ? '#8C8A86' : '#FFFFFF'; ctx.beginPath(); ctx.ellipse(cx, cy, 0.17 * u, 0.09 * u, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#4FC3E8'; ctx.beginPath(); ctx.ellipse(cx, cy, 0.14 * u, 0.07 * u, 0, 0, 7); ctx.fill();
+    if (d === 'kayaks') { const [kx, ky] = enFrente(o, 0.5 * vis, 0); put(kx + ky, () => drawKayaks(o, z, vis)); }
+    if (d === 'tigres') { for (const [a, b, sc] of [[0.3, 0.06, 0.8], [0.47, 0.3, 0.75]]) { const [x, y] = enFrente(o, a * vis, b); put(x + y + 0.05, () => drawCat(x, y, z, t + a + b, sc, '#F28C28')); } }
+    if (d === 'pez') { const [x, y] = enFrente(o, 0.44 * vis, d === 'pez' ? 0.3 : -0.28); put(x + y - 0.2, () => { const [cx, cy] = P(x, y, z + 0.008), u = U(); ctx.fillStyle = d === 'pez' ? '#8C8A86' : '#FFFFFF'; ctx.beginPath(); ctx.ellipse(cx, cy, 0.17 * u, 0.09 * u, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#4FC3E8'; ctx.beginPath(); ctx.ellipse(cx, cy, 0.14 * u, 0.07 * u, 0, 0, 7); ctx.fill();
       if (d === 'pez') { ctx.fillStyle = '#F2802C'; const q = Math.sin(t * 2) * 0.04 * u; ctx.beginPath(); ctx.ellipse(cx + q, cy, 0.035 * u, 0.017 * u, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.moveTo(cx + q - 0.03 * u, cy); ctx.lineTo(cx + q - 0.055 * u, cy - 0.015 * u); ctx.lineTo(cx + q - 0.055 * u, cy + 0.015 * u); ctx.fill(); } }); }
     if (d === 'paqueteria') { const [x, y] = enFrente(o, 0.38, -0.32); put(x + y, () => { box(x - 0.07, y - 0.05, 0.14, 0.1, 0.22, z, '#F2C94C', { tcol: '#F7DA7A' }); for (const k of [0.06, 0.13]) fillPoly(faceL(x - 0.06, x + 0.06, z + k, z + k + 0.05, y + 0.05), '#C9A230'); }); }
     if (d === 'corazon') put(arriba, () => drawHeart(o, z));
@@ -378,7 +397,9 @@ function drawFerryS(fx, fy, z, t, s = 1, alpha = 1) { const [ax, ay] = P(fx, fy,
    campo, casa del árbol en un bosquecillo. Sus coordenadas se guardan (x, y) la primera vez para que no se muevan. */
 const ZONAS = { com: { nombre: 'BARRIO DEL MUELLE' }, resA: { nombre: 'BARRIO DE LAS PALMERAS' }, resB: { nombre: 'BARRIO DEL FARO' }, bas: { nombre: 'BARRIO NUEVO' } };
 const AVE = 0.35, LOT = 0.95, SETB = 0.06;
-const ESPECIALES = ['puerto', 'cueva', 'torre', 'huerto', 'arbol'];
+const ESPECIALES = ['puerto', 'cueva', 'torre', 'huerto', 'arbol', 'cuartel'];
+// el cuartel va junto a la torre de control: zona militar al lado del puerto
+function junto(torre) { const th = Math.atan2(torre.y, torre.x), r = Math.hypot(torre.x, torre.y), a = th + 0.7 / r, r2 = r - 2.1; return { x: Math.cos(a) * r2, y: Math.sin(a) * r2 }; }
 let _TRAZADO = null;
 function trazado() {
   if (_TRAZADO) return _TRAZADO;
@@ -468,12 +489,13 @@ function planCiudad(items, nBasic, seed) {
   const libreAng = (th) => R(th) - town[Math.round(((th % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) / (2 * Math.PI) * N) % N];
   for (const e of especiales) {
     if (e.forma === 'puerto') { Object.assign(e, { x: 0, y: R(Math.PI / 2) - 0.3, ang: Math.PI / 2 }); continue; }
-    const costa = e.forma === 'cueva' || e.forma === 'torre', rr = th => R(th) - anchoCosta(th) - (e.forma === 'cueva' ? 0.5 : 0.45);
+    if (e.forma === 'cuartel') { const to = especiales.find(o => o.forma === 'torre' && o.x != null); if (to) { Object.assign(e, junto(to), { face: to.face || 'E' }); continue; } }
+    const costa = e.forma === 'cueva' || e.forma === 'torre', rr = th => R(th) - anchoCosta(th) - (e.forma === 'cueva' ? 0.5 : 1.1);
     if (costa && e.th != null) { Object.assign(e, { x: Math.cos(e.th) * rr(e.th), y: Math.sin(e.th) * rr(e.th) }); continue; }
     if (!costa && e.x != null) continue;
     let best = null, bs = -1e9;
     for (let k = 0; k < 360; k++) { const th = k / 360 * 2 * Math.PI, dp = dif(th, Math.PI / 2), free = libreAng(th); let s, r;
-      if (e.forma === 'torre') { const a = 2.0 / R(Math.PI / 2); s = -Math.abs(dif(th, Math.PI / 2 + a)) * 20 - (dp < a * 0.6 ? 9 : 0); r = R(th) - anchoCosta(th) - 0.45; }
+      if (e.forma === 'torre') { const a = 2.0 / R(Math.PI / 2); s = -Math.abs(dif(th, Math.PI / 2 + a)) * 20 - (dp < a * 0.6 ? 9 : 0); r = R(th) - anchoCosta(th) - 1.1; }
       else if (e.forma === 'cueva') { s = (rocoso(th) ? 6 : -6) + free * 0.5 - (dp < 1 ? 9 : 0); r = R(th) - anchoCosta(th) - 0.5; }
       else if (e.forma === 'huerto') { s = -Math.abs(free - 4.5) * 1.5 - (dp < 0.8 ? 9 : 0) - (rocoso(th) ? 2 : 0); r = (R(th) + town[k / 2 | 0]) / 2 + 0.2; }
       else { s = -Math.abs(free - 3.2) * 2 - (dp < 0.8 ? 9 : 0); r = town[k / 2 | 0] + 1.4; }
@@ -488,14 +510,15 @@ function planCiudad(items, nBasic, seed) {
   for (let p = 0; p < 3; p++) { const nx = new Float64Array(N); for (let i = 0; i < N; i++) nx[i] = Math.max(town[i] + 0.45 + anchoCosta(ang(i)), (sh[(i + N - 1) % N] + 2 * sh[i] + sh[(i + 1) % N]) / 4); sh = nx; }
   CITY.shape = sh;
   for (const e of especiales) { if (e.forma === 'puerto') e.y = R(Math.PI / 2) - 0.3; if (e.forma === 'torre') e.face = e.x < 0 ? 'E' : 'W';
-    if (e.th != null) { const r = R(e.th) - anchoCosta(e.th) - (e.forma === 'cueva' ? 0.5 : 0.45); e.x = Math.cos(e.th) * r; e.y = Math.sin(e.th) * r; } }
+    if (e.th != null) { const r = R(e.th) - anchoCosta(e.th) - (e.forma === 'cueva' ? 0.5 : 1.1); e.x = Math.cos(e.th) * r; e.y = Math.sin(e.th) * r; } }
+  { const to = especiales.find(o => o.forma === 'torre'), cu = especiales.find(o => o.forma === 'cuartel'); if (to && cu) Object.assign(cu, junto(to), { face: to.face }); }
   const plan = { items, basics, especiales, activos: [...activos], usados, jardines, SR: 5, zonas: { bas: basics } };
   plan.arboles = arbolesCampo(plan, seed); plan.rocas = rocasCosta();
   VIEW_ROT = _vr;
   return plan;
 }
 function arbolesCampo(plan, seed) {
-  const T = trazado(), out = [], occ = [...plan.usados.map(l => [l.x, l.y, 1.05]), ...plan.especiales.map(e => [e.x, e.y, e.forma === 'huerto' ? 1.9 : e.forma === 'arbol' ? 0.6 : 1.1]), [0, 0, 1.95], ...(plan.jardines || []).map(l => [l.x, l.y, 0.6])];
+  const T = trazado(), out = [], occ = [...plan.usados.map(l => [l.x, l.y, 1.05]), ...plan.especiales.map(e => [e.x, e.y, e.forma === 'huerto' ? 1.9 : e.forma === 'arbol' ? 0.6 : 1.1]), ...(() => { const to = plan.especiales.find(o => o.forma === 'torre'), cu = plan.especiales.find(o => o.forma === 'cuartel'); return to && cu && to.x != null && cu.x != null ? [[(to.x + cu.x) / 2, (to.y + cu.y) / 2, 1.6]] : []; })(), [0, 0, 1.95], ...(plan.jardines || []).map(l => [l.x, l.y, 0.6])];
   const actB = plan.activos.map(bi => T.blocks[bi]);
   for (const l of plan.jardines || []) { const k = l.i; out.push({ x: l.x + (h2(k, 31) - 0.5) * 0.3, y: l.y + (h2(k, 32) - 0.5) * 0.3, s: 0.5 + h2(k, 33) * 0.25, de: l.de }); if (h2(k, 34) < 0.5) out.push({ x: l.x + (h2(k, 35) - 0.5) * 0.5, y: l.y + (h2(k, 36) - 0.5) * 0.5, s: 0.38, de: l.de }); }
   for (let k = 0; k < 8; k++) { const a = Math.PI / 4 + k * Math.PI / 2 + (k > 3 ? 0.35 : -0.35); out.push({ x: Math.cos(a) * 1.5, y: Math.sin(a) * 1.5, s: 0.55 }); }   // árboles de la plaza
@@ -552,8 +575,23 @@ function drawCityGround(plan, zf, alpha = 1) {
   const maxY = Math.max(1.5, ...act.filter(b => b.x0 <= 0.4 && b.x1 >= -0.4 || Math.abs(b.x0 - AVE) < 0.05 || Math.abs(b.x1 + AVE) < 0.05).map(b => b.y1));
   const muelle = [-AVE, maxY - 0.2, AVE, isR0(Math.PI / 2, 5) - 0.1]; calles.push(muelle);
   // caminos de tierra (se dibujan antes que las calles: llegan al borde de la acera y no se suben encima)
-  for (const e of plan.especiales) { if (!['huerto', 'arbol', 'torre'].includes(e.forma) || e.x == null) continue;
-    const cand = e.forma === 'torre' ? [muelle] : calles; let best = null, bd = 1e9;
+  // zona militar: explanada de grava con valla alrededor de la torre y el cuartel; un solo camino desde la puerta de la valla hasta la carretera del muelle
+  { const to = plan.especiales.find(o => o.forma === 'torre'), cu = plan.especiales.find(o => o.forma === 'cuartel');
+    if (to && to.x != null) { const L = [to, cu].filter(o => o && o.x != null);
+      const x0 = Math.min(...L.map(o => o.x)) - 0.6, x1 = Math.max(...L.map(o => o.x)) + 0.6, y0 = Math.min(...L.map(o => o.y)) - 0.6, y1 = Math.max(...L.map(o => o.y)) + 0.6;
+      const lado = muelle[0] > x1 ? 1 : -1, gx = lado > 0 ? x1 : x0, gy = clamp(to.y, y0 + 0.3, y1 - 0.3), tx = lado > 0 ? muelle[0] : muelle[2], ty = clamp(gy, muelle[1], muelle[3]);
+      // camino de tierra: de la puerta de la valla a la carretera (curva suave si hace falta)
+      const pts = []; for (let k = 0; k <= 20; k++) { const q = k / 20; pts.push([lerp(gx - lado * 0.05, tx, q), lerp(gy, ty, q * q * (3 - 2 * q))]); }
+      const w = 0.13, A = [], B = []; for (let k = 0; k < pts.length; k++) { const p0 = pts[Math.max(0, k - 1)], p1 = pts[Math.min(pts.length - 1, k + 1)], dx = p1[0] - p0[0], dy = p1[1] - p0[1], m = Math.hypot(dx, dy) || 1; A.push([pts[k][0] - dy / m * w, pts[k][1] + dx / m * w]); B.push([pts[k][0] + dy / m * w, pts[k][1] - dx / m * w]); }
+      fillPoly([...A, ...B.reverse()].map(([x, y]) => { const [rx, ry] = rotXY(x, y); return P(rx, ry, z + 0.001); }), TIERRA);
+      rectW(x0, y0, x1, y1, z + 0.0008, '#C8C3A4');
+      // caminito de grava más oscura de la puerta de la valla a la puerta de la torre
+      rectW(Math.min(gx, to.x), to.y - 0.1, Math.max(gx, to.x), to.y + 0.1, z + 0.0009, '#B3AD8C'); if (Math.abs(gy - to.y) > 0.01) rectW(gx - 0.1, Math.min(gy, to.y), gx + 0.1, Math.max(gy, to.y), z + 0.0009, '#B3AD8C');
+      const fz = (xa, ya, xb, yb, gap) => { const [a, b] = rotXY(xa, ya), [c, d] = rotXY(xb, yb); fenceLine(a, b, c, d, z, gap); };
+      const gq = (gy - y0) / (y1 - y0), gap = [gq - 0.12, gq + 0.12];
+      fz(x0, y0, x1, y0); fz(x0, y1, x1, y1); fz(x0, y0, x0, y1, lado < 0 ? gap : null); fz(x1, y0, x1, y1, lado > 0 ? gap : null); } }
+  for (const e of plan.especiales) { if (!['huerto', 'arbol'].includes(e.forma) || e.x == null) continue;
+    const cand = (e.forma === 'torre' || e.forma === 'cuartel') ? [muelle] : calles; let best = null, bd = 1e9;
     for (const [x0, y0, x1, y1] of cand) { const px = clamp(e.x, x0, x1), py = clamp(e.y, y0, y1), d = Math.hypot(px - e.x, py - e.y); if (d < bd) { bd = d; best = [px, py, Math.abs(py - e.y) > Math.abs(px - e.x)]; } }
     if (!best) continue; const [tx, ty] = best;
     const [sx, sy] = e.forma === 'torre' ? [e.x + Math.sign(tx - e.x) * 0.2, e.y] : [e.x, e.y];

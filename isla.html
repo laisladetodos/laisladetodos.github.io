@@ -55,7 +55,7 @@ a.btn:focus-visible,button:focus-visible{outline:3px solid var(--yellow);outline
   <div class="meta" id="cMeta"></div>
 </div>
 <script src="isla-lib.js?v=1794062095"></script>
-<script src="isla-extras.js?v=1794163078"></script>
+<script src="isla-extras.js?v=1794163935"></script>
 <script>
 'use strict';
 const SEED = 1.7;
@@ -139,7 +139,7 @@ function frame(ts) {
   drawSea(t, R); drawShore(R, SEED, t); if (SOLO_ARENA()) extrude(islandPts(R, SEED), 0, Z_SAND, C.sand, C.sandSide); else drawIsland(R, SEED);
   const rc = islandR(Math.PI / 2, R, SEED);
   const rc0 = isR0(Math.PI / 2, R);
-  const fsc = ferryScale(ISLA.nuevos_hoy);
+  const fsc = ferryScale(Math.max(ISLA.nuevos_hoy || 0, ISLA.ferry_max_nuevos || 0));   // el ferry solo crece, nunca encoge
   if (PLAN) drawCityGround(PLAN, (x, y) => SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED));
   const list = [{ d: -0.75, f: () => drawObj({ type: 'palm', x: 0, y: 0, s: 1.1, z: SOLO_ARENA() ? Z_SAND : groundZ(0, 0, R, SEED) }, t, R, SEED) }];
   if (PLAN) drawParks(PLAN, (x, y) => SOLO_ARENA() ? Z_SAND : groundZ(x, y, R, SEED), (d, f) => list.push({ d, f }));

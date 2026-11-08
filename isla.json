@@ -470,7 +470,10 @@
   {
    "tipo": "negocio",
    "forma": "kayaks",
-   "dia": 6
+   "dia": 6,
+   "detalles": [
+    "kayaks"
+   ]
   },
   {
    "tipo": "casa",
@@ -513,5 +516,6 @@
   }
  ],
  "basicas": 124,
- "nuevos_hoy": 15
+ "nuevos_hoy": 15,
+ "ferry_max_nuevos": 65
 }
