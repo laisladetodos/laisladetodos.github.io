@@ -194,6 +194,12 @@ function drawCustom(o, z, t) {
   if (f === 'super') return shopWithSign(o, z, '#2E9E5B', 'SUPER', '#FFFFFF', '#FFFFFF');
   if (f === 'peluqueria') return shopWithSign(o, z, '#B66DFF', 'PELUQUERÍA', '#FFFFFF', '#F6EEFF');
   if (f === 'mascotas') return shopWithSign(o, z, '#2BA8A0', 'MASCOTAS', '#FFFFFF', '#E6F7F5');
+  if (f === 'kayaks') { shopWithSign(o, z, '#F28C28', 'KAYAKS', '#FFFFFF', '#FFF1E0'); const [kx, ky] = enFrente(o, 0.36, 0.3); for (const [k, col] of [[0, '#E8384F'], [1, '#FFC83D']]) { const a = P(kx - 0.16, ky + k * 0.07, z + 0.03 + k * 0.05), b = P(kx + 0.16, ky + k * 0.07, z + 0.03 + k * 0.05); const u = U(); ctx.strokeStyle = col; ctx.lineWidth = u * 0.05; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke(); } return; }
+  if (f === 'carniceria') return shopWithSign(o, z, '#B5452E', 'CARNICERÍA', '#FFFFFF', '#FBEDE8');
+  if (f === 'churreria') return shopWithSign(o, z, '#E9A93B', 'CHURROS', '#FFF3D6', '#FFF6E6');
+  if (f === 'cuartel') { shopWithSign(o, z, '#5B6B3A', 'CUARTEL', '#E9EDDC', '#C9C3A6'); const [bx, by] = enFrente(o, 0.4, -0.28); for (let i = 0; i < 3; i++) box(bx - 0.08 + i * 0.055, by - 0.03, 0.05, 0.06, 0.05, z, '#B9A77A'); const [fx, fy] = enFrente(o, 0.36, 0.3); drawFlag(fx, fy, z, t, 'espana'); return; }
+  if (f === 'colegio') { shopWithSign(o, z, '#E9A93B', 'COLE', '#FFFFFF', o.pared || '#FFFFFF'); return; }
+  if (f === 'refugio') { shadowAt(o.x, o.y, z, 0.42, 0.2); drawHouseF({ x: o.x, y: o.y, roof: '#3E9A4F', h: 0.4, wall: '#FCEBD2' }, z, o.face); return; }
   if ((o.det || o.detalles || []).includes('piscina')) {   // jardín propio con piscina, dentro de su parcela
     const g = 0.42; fillPoly([P(o.x - g, o.y - g, z + 0.006), P(o.x + g, o.y - g, z + 0.006), P(o.x + g, o.y + g, z + 0.006), P(o.x - g, o.y + g, z + 0.006)], '#86CC6E');
     fenceLine(o.x - g, o.y - g, o.x + g, o.y - g, z); fenceLine(o.x - g, o.y - g, o.x - g, o.y + g, z);
@@ -273,7 +279,8 @@ function alturaTejado(o) {   // [altura de la cumbrera, ¿tejado plano?]
   if (['tienda'].includes(f)) return [0.48, true];
   if (['bar'].includes(f)) return [0.44, true];
   if (['veterinario'].includes(f)) return [0.38, true];
-  if (['kebab', 'pizzeria', 'moviles', 'comisaria', 'restaurante', 'lavanderia', 'super', 'peluqueria', 'mascotas'].includes(f)) return [0.42, true];
+  if (['kebab', 'pizzeria', 'moviles', 'comisaria', 'restaurante', 'lavanderia', 'super', 'peluqueria', 'mascotas', 'kayaks', 'carniceria', 'churreria', 'cuartel', 'colegio'].includes(f)) return [0.42, true];
+  if (f === 'refugio') return [0.7, false];
   if (f === 'perrera') return [0.68, false];
   if (f === 'tigre' || f === 'unicornio') return [0.74, false];
   if ((o.det || []).includes('piscina')) return [0.64, false];
@@ -320,6 +327,10 @@ function drawDetails(o, z, t, push) {   // push(d, fn): cada detalle con su prop
     if (d === 'hamster') suelo((x, y) => drawHamster(x, y, z, t, 1.4));
     if (d === 'moto') { const [x, y] = enFrente(o, 0.45, 0.36); put(x + y, () => drawMoto(x, y, z)); }
     if (d === 'terraza') { const [x, y] = enFrente(o, 0.5, 0); put(x + y, () => drawTerrazaF(o, z)); }
+    if (d === 'tigres') { cat('#F28C28', 1.6); cat('#F28C28', 1.4); }
+    if (d === 'minipiscina' || d === 'pez') { const [x, y] = enFrente(o, 0.44 * vis, d === 'pez' ? 0.3 : -0.28); put(x + y - 0.2, () => { const [cx, cy] = P(x, y, z + 0.008), u = U(); ctx.fillStyle = d === 'pez' ? '#8C8A86' : '#FFFFFF'; ctx.beginPath(); ctx.ellipse(cx, cy, 0.17 * u, 0.09 * u, 0, 0, 7); ctx.fill(); ctx.fillStyle = '#4FC3E8'; ctx.beginPath(); ctx.ellipse(cx, cy, 0.14 * u, 0.07 * u, 0, 0, 7); ctx.fill();
+      if (d === 'pez') { ctx.fillStyle = '#F2802C'; const q = Math.sin(t * 2) * 0.04 * u; ctx.beginPath(); ctx.ellipse(cx + q, cy, 0.035 * u, 0.017 * u, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.moveTo(cx + q - 0.03 * u, cy); ctx.lineTo(cx + q - 0.055 * u, cy - 0.015 * u); ctx.lineTo(cx + q - 0.055 * u, cy + 0.015 * u); ctx.fill(); } }); }
+    if (d === 'paqueteria') { const [x, y] = enFrente(o, 0.38, -0.32); put(x + y, () => { box(x - 0.07, y - 0.05, 0.14, 0.1, 0.22, z, '#F2C94C', { tcol: '#F7DA7A' }); for (const k of [0.06, 0.13]) fillPoly(faceL(x - 0.06, x + 0.06, z + k, z + k + 0.05, y + 0.05), '#C9A230'); }); }
     if (d === 'corazon') put(arriba, () => drawHeart(o, z));
     if (d === 'flores') { const [x, y] = enFrente(o, 0.34 * vis, 0); put(x + y, () => drawFlowers(o, z, vis)); }
     if (['peru', 'espana', 'zamora', 'cuba', 'canarias'].includes(d)) {
