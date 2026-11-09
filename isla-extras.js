@@ -202,6 +202,7 @@ function drawCustom(o, z, t) {
   if (f === 'peluqueria') return shopWithSign(o, z, '#B66DFF', 'PELUQUERÍA', '#FFFFFF', '#F6EEFF');
   if (f === 'mascotas') return shopWithSign(o, z, '#2BA8A0', 'MASCOTAS', '#FFFFFF', '#E6F7F5');
   if (f === 'kayaks') { shopWithSign(o, z, '#F28C28', 'KAYAKS', '#FFFFFF', '#FFF1E0'); return; }
+  if (f === 'mexicano') return shopWithSign(o, z, '#2E9E5B', 'MEXICANO', '#FFFFFF', '#FFF4E0');
   if (f === 'carniceria') return shopWithSign(o, z, '#B5452E', 'CARNICERÍA', '#FFFFFF', '#FBEDE8');
   if (f === 'churreria') return shopWithSign(o, z, '#E9A93B', 'CHURROS', '#FFF3D6', '#FFF6E6');
   if (f === 'cuartel') { shopWithSign(o, z, '#5B6B3A', 'CUARTEL', '#E9EDDC', '#C9C3A6'); const [bx, by] = enFrente(o, 0.4, -0.28); for (let i = 0; i < 3; i++) box(bx - 0.08 + i * 0.055, by - 0.03, 0.05, 0.06, 0.05, z, '#B9A77A'); const [fx, fy] = enFrente(o, 0.36, 0.3); drawFlag(fx, fy, z, t, 'espana'); return; }
@@ -286,7 +287,7 @@ function alturaTejado(o) {   // [altura de la cumbrera, ¿tejado plano?]
   if (['tienda'].includes(f)) return [0.48, true];
   if (['bar'].includes(f)) return [0.44, true];
   if (['veterinario'].includes(f)) return [0.38, true];
-  if (['kebab', 'pizzeria', 'moviles', 'comisaria', 'restaurante', 'lavanderia', 'super', 'peluqueria', 'mascotas', 'kayaks', 'carniceria', 'churreria', 'cuartel', 'colegio'].includes(f)) return [0.42, true];
+  if (['kebab', 'pizzeria', 'moviles', 'comisaria', 'restaurante', 'lavanderia', 'super', 'peluqueria', 'mascotas', 'kayaks', 'mexicano', 'carniceria', 'churreria', 'cuartel', 'colegio'].includes(f)) return [0.42, true];
   if (f === 'refugio') return [0.7, false];
   if (f === 'perrera') return [0.68, false];
   if (f === 'tigre' || f === 'unicornio') return [0.74, false];
@@ -604,6 +605,17 @@ function drawCityGround(plan, zf, alpha = 1) {
     for (let k = 0; k < pts.length; k++) { const p0 = pts[Math.max(0, k - 1)], p1 = pts[Math.min(pts.length - 1, k + 1)], dx = p1[0] - p0[0], dy = p1[1] - p0[1], m = Math.hypot(dx, dy) || 1;
       L.push([pts[k][0] - dy / m * w, pts[k][1] + dx / m * w]); Rr.push([pts[k][0] + dy / m * w, pts[k][1] - dx / m * w]); }
     fillPoly([...L, ...Rr.reverse()].map(([x, y]) => { const [rx, ry] = rotXY(x, y); return P(rx, ry, z + 0.001); }), TIERRA); }
+  // rampa de kayaks (mejora de la tienda de kayaks): camino de tierra desde el final de la carretera del muelle hasta la playa, con dos kayaks en la arena
+  if (plan.items.some(i => (i.det || i.detalles || []).includes('rampa_kayak'))) {
+    const th = Math.PI / 2 - 0.12, Rb = islandR(th + VR, 5, CITY.seed), bx = Math.cos(th) * (Rb - 0.45), by = Math.sin(th) * (Rb - 0.45), sx = muelle[2], sy = muelle[3] - 0.5;
+    const pts = []; for (let k = 0; k <= 16; k++) { const q = k / 16; pts.push([lerp(sx - 0.05, bx, q), lerp(sy, by, q * q)]); }
+    const w = 0.12, A = [], B = []; for (let k = 0; k < pts.length; k++) { const p0 = pts[Math.max(0, k - 1)], p1 = pts[Math.min(pts.length - 1, k + 1)], dx = p1[0] - p0[0], dy = p1[1] - p0[1], m = Math.hypot(dx, dy) || 1; A.push([pts[k][0] - dy / m * w, pts[k][1] + dx / m * w]); B.push([pts[k][0] + dy / m * w, pts[k][1] - dx / m * w]); }
+    fillPoly([...A, ...B.reverse()].map(([x, y]) => { const [rx, ry] = rotXY(x, y); return P(rx, ry, z + 0.001); }), TIERRA);
+    const KZ = Z_SAND + 0.01; [[0.25, '#E8384F'], [0.5, '#FFC83D']].forEach(([o2, col]) => { const cx = bx + o2, cy = by + 0.15, hull = [];
+      for (let i = 0; i <= 12; i++) { const q = i / 12 * 2 - 1, [rx, ry] = rotXY(cx + 0.06 * Math.sqrt(1 - q * q), cy + q * 0.4); hull.push(P(rx, ry, KZ)); }
+      for (let i = 12; i >= 0; i--) { const q = i / 12 * 2 - 1, [rx, ry] = rotXY(cx - 0.06 * Math.sqrt(1 - q * q), cy + q * 0.4); hull.push(P(rx, ry, KZ)); }
+      fillPoly(hull, col); const [ax, ay] = rotXY(cx, cy - 0.08), [bx2, by2] = rotXY(cx, cy + 0.08); ctx.strokeStyle = '#2B2B2B'; ctx.lineWidth = Math.max(2, U() * 0.04); ctx.beginPath(); ctx.moveTo(...P(ax, ay, KZ + 0.004)); ctx.lineTo(...P(bx2, by2, KZ + 0.004)); ctx.stroke(); });
+  }
   for (const [x0, y0, x1, y1] of calles) rectW(x0, y0, x1, y1, z + 0.002, ASF);
   // plaza
   const circ = (r, zz, col) => { const pl = []; for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2; pl.push(P(Math.cos(a) * r, Math.sin(a) * r, zz)); } fillPoly(pl, col); };

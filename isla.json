@@ -1,8 +1,8 @@
 {
- "dia": 6,
- "habitantes": 187,
+ "dia": 7,
+ "habitantes": 198,
  "radio": 3.6,
- "actualizado": "2026-11-08",
+ "actualizado": "2026-11-09",
  "construcciones": [
   {
    "tipo": "casa",
@@ -384,7 +384,10 @@
    "dia": 5,
    "color": "#8B5A2B",
    "pared": "#C8643C",
-   "usuario": "@mateeee_12"
+   "usuario": "@mateeee_12",
+   "detalles": [
+    "flores"
+   ]
   },
   {
    "tipo": "casa",
@@ -465,14 +468,19 @@
    "tipo": "negocio",
    "forma": "bar",
    "color": "#8B5A2B",
-   "dia": 6
+   "dia": 6,
+   "detalles": [
+    "flores"
+   ],
+   "usuario": "@mtzx_47"
   },
   {
    "tipo": "negocio",
    "forma": "kayaks",
    "dia": 6,
    "detalles": [
-    "kayaks"
+    "kayaks",
+    "rampa_kayak"
    ]
   },
   {
@@ -513,9 +521,35 @@
    "tipo": "negocio",
    "forma": "churreria",
    "dia": 6
+  },
+  {
+   "tipo": "negocio",
+   "forma": "tienda",
+   "color": "#3D7DD8",
+   "dia": 7,
+   "usuario": "@alonso294797309"
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "color": "#E76F51",
+   "dia": 7,
+   "usuario": "@felu0_"
+  },
+  {
+   "tipo": "negocio",
+   "forma": "mexicano",
+   "dia": 7
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "color": "#9FE7E0",
+   "pared": "#CDB2EC",
+   "dia": 7
   }
  ],
- "basicas": 124,
- "nuevos_hoy": 15,
+ "basicas": 131,
+ "nuevos_hoy": 11,
  "ferry_max_nuevos": 65
 }
