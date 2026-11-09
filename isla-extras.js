@@ -74,8 +74,16 @@ function drawTreeHouse(o, z) {
   for (const off of [-0.06, 0.06]) { ctx.beginPath(); ctx.moveTo(a[0] + off * u, a[1]); ctx.lineTo(b[0] + off * u, b[1]); ctx.stroke(); }
   for (let k = 1; k < 6; k++) { const q = k / 6; ctx.beginPath(); ctx.moveTo(lerp(a[0], b[0], q) - 0.06 * u, lerp(a[1], b[1], q)); ctx.lineTo(lerp(a[0], b[0], q) + 0.06 * u, lerp(a[1], b[1], q)); ctx.stroke(); }
 }
+// tamaño de los carteles: 1 en la web (se leen con zoom o tocando el edificio); los vídeos (desde el Día 8) usan
+// SIGN_SCALE = 1.6 para que se lean en el móvil en los planos cercanos (en los lejanos siguen pequeños y no se amontonan)
+var SIGN_SCALE = 1;
 function signBoard(x, y, z, kind, label) {
-  const [bx, by] = P(x, y, z); const u = U();
+  const [bx, by] = P(x, y, z), k = SIGN_SCALE;
+  if (k !== 1) { ctx.save(); ctx.translate(bx, by); ctx.scale(k, k); ctx.translate(-bx, -by); signBoard0(bx, by, kind, label); ctx.restore(); return; }
+  signBoard0(bx, by, kind, label);
+}
+function signBoard0(bx, by, kind, label) {
+  const u = U();
   ctx.fillStyle = C.woodDark; ctx.fillRect(bx - 0.015 * u, by - 0.18 * u, 0.03 * u, 0.18 * u);
   if (label) {
     ctx.font = F('IDBlack', Math.max(6, 0.11 * u)); const tw = ctx.measureText(label).width + 0.1 * u;
