@@ -401,6 +401,14 @@ const AVE = 0.35, LOT = 0.95, SETB = 0.06;
 const ESPECIALES = ['puerto', 'cueva', 'torre', 'huerto', 'arbol', 'cuartel'];
 // el cuartel va junto a la torre de control: zona militar al lado del puerto
 function junto(torre) { const th = Math.atan2(torre.y, torre.x), r = Math.hypot(torre.x, torre.y), a = th + 0.7 / r, r2 = r - 2.1; return { x: Math.cos(a) * r2, y: Math.sin(a) * r2 }; }
+// río de los kayaks (mejora "rampa_kayak" de la tienda de kayaks): sale del lado de la tienda y baja serpenteando hasta el mar
+function rioKayak(plan) {
+  const k = plan.items.find(i => i.forma === 'kayaks' && (i.det || i.detalles || []).includes('rampa_kayak') && i.x != null); if (!k) return null;
+  const sx = k.x + 0.15, sy = k.y + 0.55, th = Math.atan2(sy + 6, sx + 1.2), ex = Math.cos(th), ey = Math.sin(th);
+  let r = Math.hypot(sx, sy); const R = islandR(th, 5, CITY.seed) + 0.6, pts = [];
+  for (let i = 0; i <= 40; i++) { const q = i / 40, x = lerp(sx, ex * R, q) + Math.sin(q * 9) * 0.28 * Math.sin(q * Math.PI), y = lerp(sy, ey * R, q); pts.push([x, y]); }
+  return pts;
+}
 let _TRAZADO = null;
 function trazado() {
   if (_TRAZADO) return _TRAZADO;
@@ -521,6 +529,7 @@ function planCiudad(items, nBasic, seed) {
 function arbolesCampo(plan, seed) {
   const T = trazado(), out = [], occ = [...plan.usados.map(l => [l.x, l.y, 1.05]), ...plan.especiales.map(e => [e.x, e.y, e.forma === 'huerto' ? 1.9 : e.forma === 'arbol' ? 0.6 : 1.1]), ...(() => { const to = plan.especiales.find(o => o.forma === 'torre'), cu = plan.especiales.find(o => o.forma === 'cuartel'); return to && cu && to.x != null && cu.x != null ? [[(to.x + cu.x) / 2, (to.y + cu.y) / 2, 1.6]] : []; })(), [0, 0, 1.95], ...(plan.jardines || []).map(l => [l.x, l.y, 0.6])];
   const actB = plan.activos.map(bi => T.blocks[bi]);
+  const rio = rioKayak(plan) || [];
   for (const l of plan.jardines || []) { const k = l.i; out.push({ x: l.x + (h2(k, 31) - 0.5) * 0.3, y: l.y + (h2(k, 32) - 0.5) * 0.3, s: 0.5 + h2(k, 33) * 0.25, de: l.de }); if (h2(k, 34) < 0.5) out.push({ x: l.x + (h2(k, 35) - 0.5) * 0.5, y: l.y + (h2(k, 36) - 0.5) * 0.5, s: 0.38, de: l.de }); }
   for (let k = 0; k < 8; k++) { const a = Math.PI / 4 + k * Math.PI / 2 + (k > 3 ? 0.35 : -0.35); out.push({ x: Math.cos(a) * 1.5, y: Math.sin(a) * 1.5, s: 0.55 }); }   // árboles de la plaza
   for (let i = -30; i <= 30; i++) for (let j = -30; j <= 30; j++) {
@@ -528,6 +537,7 @@ function arbolesCampo(plan, seed) {
     if (r > islandR(th, 5, seed) - anchoCosta(th) - 0.3) continue;
     if (Math.abs(x) < 0.9 && y > 0) continue;                                                   // camino al muelle
     if (occ.some(([ox, oy, m]) => Math.hypot(ox - x, oy - y) < m)) continue;
+    if (rio.some(([rx, ry]) => Math.hypot(rx - x, ry - y) < 0.55)) continue;
     const enB = actB.find(b => x > b.x0 - 0.75 && x < b.x1 + 0.75 && y > b.y0 - 0.75 && y < b.y1 + 0.75);
     if (enB) { const m = 1.25; if (x > enB.x0 + m && x < enB.x1 - m && y > enB.y0 + m && y < enB.y1 - m && h2(i, j, 13) < 0.45) out.push({ x, y, s: 0.45 + h2(i, j, 4) * 0.3 }); continue; }
     const bosque = Math.sin(x * 0.55 + 1.7) * Math.cos(y * 0.6 - 0.4) + 0.5 * Math.sin((x + y) * 0.9);
@@ -605,18 +615,16 @@ function drawCityGround(plan, zf, alpha = 1) {
     for (let k = 0; k < pts.length; k++) { const p0 = pts[Math.max(0, k - 1)], p1 = pts[Math.min(pts.length - 1, k + 1)], dx = p1[0] - p0[0], dy = p1[1] - p0[1], m = Math.hypot(dx, dy) || 1;
       L.push([pts[k][0] - dy / m * w, pts[k][1] + dx / m * w]); Rr.push([pts[k][0] + dy / m * w, pts[k][1] - dx / m * w]); }
     fillPoly([...L, ...Rr.reverse()].map(([x, y]) => { const [rx, ry] = rotXY(x, y); return P(rx, ry, z + 0.001); }), TIERRA); }
-  // rampa de kayaks (mejora de la tienda de kayaks): camino de tierra desde el final de la carretera del muelle hasta la playa, con dos kayaks en la arena
-  if (plan.items.some(i => (i.det || i.detalles || []).includes('rampa_kayak'))) {
-    const th = Math.PI / 2 - 0.12, Rb = islandR(th + VR, 5, CITY.seed), bx = Math.cos(th) * (Rb - 0.45), by = Math.sin(th) * (Rb - 0.45), sx = muelle[2], sy = muelle[3] - 0.5;
-    const pts = []; for (let k = 0; k <= 16; k++) { const q = k / 16; pts.push([lerp(sx - 0.05, bx, q), lerp(sy, by, q * q)]); }
-    const w = 0.12, A = [], B = []; for (let k = 0; k < pts.length; k++) { const p0 = pts[Math.max(0, k - 1)], p1 = pts[Math.min(pts.length - 1, k + 1)], dx = p1[0] - p0[0], dy = p1[1] - p0[1], m = Math.hypot(dx, dy) || 1; A.push([pts[k][0] - dy / m * w, pts[k][1] + dx / m * w]); B.push([pts[k][0] + dy / m * w, pts[k][1] - dx / m * w]); }
-    fillPoly([...A, ...B.reverse()].map(([x, y]) => { const [rx, ry] = rotXY(x, y); return P(rx, ry, z + 0.001); }), TIERRA);
-    const KZ = Z_SAND + 0.01; [[0.25, '#E8384F'], [0.5, '#FFC83D']].forEach(([o2, col]) => { const cx = bx + o2, cy = by + 0.15, hull = [];
-      for (let i = 0; i <= 12; i++) { const q = i / 12 * 2 - 1, [rx, ry] = rotXY(cx + 0.06 * Math.sqrt(1 - q * q), cy + q * 0.4); hull.push(P(rx, ry, KZ)); }
-      for (let i = 12; i >= 0; i--) { const q = i / 12 * 2 - 1, [rx, ry] = rotXY(cx - 0.06 * Math.sqrt(1 - q * q), cy + q * 0.4); hull.push(P(rx, ry, KZ)); }
-      fillPoly(hull, col); const [ax, ay] = rotXY(cx, cy - 0.08), [bx2, by2] = rotXY(cx, cy + 0.08); ctx.strokeStyle = '#2B2B2B'; ctx.lineWidth = Math.max(2, U() * 0.04); ctx.beginPath(); ctx.moveTo(...P(ax, ay, KZ + 0.004)); ctx.lineTo(...P(bx2, by2, KZ + 0.004)); ctx.stroke(); });
-  }
+  // río de los kayaks: agua con orillas, por debajo de las calles (las calles lo cruzan con un puentecito)
+  const rio = rioKayak(plan);
+  if (rio) { const band = (w, col, zz) => { const A = [], B = []; for (let k = 0; k < rio.length; k++) { const p0 = rio[Math.max(0, k - 1)], p1 = rio[Math.min(rio.length - 1, k + 1)], dx = p1[0] - p0[0], dy = p1[1] - p0[1], m = Math.hypot(dx, dy) || 1, ww = w * (k === 0 ? 0.7 : 1); A.push([rio[k][0] - dy / m * ww, rio[k][1] + dx / m * ww]); B.push([rio[k][0] + dy / m * ww, rio[k][1] - dx / m * ww]); }
+      fillPoly([...A, ...B.reverse()].map(([x, y]) => { const [rx, ry] = rotXY(x, y); return P(rx, ry, zz); }), col); };
+    band(0.24, '#5E9E54', z + 0.0006); band(0.17, '#4FB6DE', z + 0.0007); band(0.07, '#7FD3F0', z + 0.00075); }
   for (const [x0, y0, x1, y1] of calles) rectW(x0, y0, x1, y1, z + 0.002, ASF);
+  if (rio) for (const [x0, y0, x1, y1] of calles) { const hit = rio.filter(([x, y]) => x > x0 - 0.15 && x < x1 + 0.15 && y > y0 - 0.02 && y < y1 + 0.02); if (!hit.length) continue;
+    const cx = hit.reduce((a, p) => a + p[0], 0) / hit.length, cy = hit.reduce((a, p) => a + p[1], 0) / hit.length, horiz = x1 - x0 > y1 - y0;
+    const rail = (ax, ay, bx, by) => { const [p, q] = rotXY(ax, ay), [r2, s2] = rotXY(bx, by); box(Math.min(p, r2) - 0.02, Math.min(q, s2) - 0.02, Math.abs(r2 - p) + 0.04, Math.abs(s2 - q) + 0.04, 0.07, z + 0.002, '#D9D2C3', { tcol: '#EEE8DB' }); };
+    if (horiz) { rail(cx - 0.24, y0, cx + 0.24, y0); rail(cx - 0.24, y1, cx + 0.24, y1); } else { rail(x0, cy - 0.24, x0, cy + 0.24); rail(x1, cy - 0.24, x1, cy + 0.24); } }
   // plaza
   const circ = (r, zz, col) => { const pl = []; for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2; pl.push(P(Math.cos(a) * r, Math.sin(a) * r, zz)); } fillPoly(pl, col); };
   circ(1.7, z + 0.007, '#EFE6D2'); circ(1.25, z + 0.0075, '#E7DCC4'); circ(0.6, z + 0.008, '#E2D5BA');
@@ -626,6 +634,12 @@ function drawCityGround(plan, zf, alpha = 1) {
   ctx.restore();
 }
 function drawParks(plan, zf, push) {
+  const rio = rioKayak(plan);
+  if (rio) [[0.24, '#E8384F'], [0.58, '#FFC83D']].forEach(([q, col]) => { const k = Math.round(q * (rio.length - 1)), p0 = rio[k], p1 = rio[k + 1], [x, y] = rotXY(...p0);
+    push(x + y, () => { const z = zf(x, y) + 0.01, dx = p1[0] - p0[0], dy = p1[1] - p0[1], m = Math.hypot(dx, dy), hull = [];
+      for (let i = 0; i <= 12; i++) { const t2 = i / 12 * 2 - 1, w = 0.055 * Math.sqrt(1 - t2 * t2), [a, b] = rotXY(p0[0] + dx / m * t2 * 0.32 - dy / m * w, p0[1] + dy / m * t2 * 0.32 + dx / m * w); hull.push(P(a, b, z)); }
+      for (let i = 12; i >= 0; i--) { const t2 = i / 12 * 2 - 1, w = 0.055 * Math.sqrt(1 - t2 * t2), [a, b] = rotXY(p0[0] + dx / m * t2 * 0.32 + dy / m * w, p0[1] + dy / m * t2 * 0.32 - dx / m * w); hull.push(P(a, b, z)); }
+      fillPoly(hull, col); const [cx, cy] = P(x, y, z + 0.02); ctx.fillStyle = '#2B2B2B'; ctx.beginPath(); ctx.ellipse(cx, cy, U() * 0.035, U() * 0.018, 0, 0, 7); ctx.fill(); }); });
   for (const a of plan.arboles || []) { const [x, y] = rotXY(a.x, a.y), z = zf(x, y); push(x + y, () => a.palm ? drawPalm({ x, y, s: a.s * 1.1 }, z) : drawTree({ x, y, s: a.s }, z)); }
   for (const r of plan.rocas || []) { const [x, y] = rotXY(r.x, r.y); push(x + y, () => drawRock(x, y, r.agua ? 0.02 : Z_SAND, r.s)); }
 }
