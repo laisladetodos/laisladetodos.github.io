@@ -73,7 +73,6 @@ function drawTreeHouse(o, z) {
   const a = P(x - 0.1, y + 0.45, z), b = P(x - 0.1, y + 0.36, z + 0.62); ctx.strokeStyle = C.woodDark; ctx.lineWidth = Math.max(2, u * 0.025);
   for (const off of [-0.06, 0.06]) { ctx.beginPath(); ctx.moveTo(a[0] + off * u, a[1]); ctx.lineTo(b[0] + off * u, b[1]); ctx.stroke(); }
   for (let k = 1; k < 6; k++) { const q = k / 6; ctx.beginPath(); ctx.moveTo(lerp(a[0], b[0], q) - 0.06 * u, lerp(a[1], b[1], q)); ctx.lineTo(lerp(a[0], b[0], q) + 0.06 * u, lerp(a[1], b[1], q)); ctx.stroke(); }
-  ctx.fillStyle = '#58B865'; ctx.beginPath(); ctx.arc(lx + 0.42 * u, ly - 0.05 * u, 0.2 * u, 0, 7); ctx.fill();
 }
 function signBoard(x, y, z, kind, label) {
   const [bx, by] = P(x, y, z); const u = U();
@@ -446,6 +445,13 @@ const enSectorBasico = th => th < -Math.PI / 2 - 0.12 && th > -Math.PI + 0.12;
 const costaV = th => Math.sin(2 * th + 1.3) + 0.6 * Math.sin(5 * th + 0.4);
 const distMuelle = th => Math.abs(((th - Math.PI / 2 + Math.PI * 3) % (2 * Math.PI)) - Math.PI);
 function rocoso(th) { return distMuelle(th) > 0.75 && costaV(th) > 0.45; }
+// peso de roca (0 = playa, 1 = roca entera): sube suave en los extremos de cada tramo rocoso
+function rocaPeso(th) { if (distMuelle(th) <= 0.75) return 0; const q = clamp((costaV(th) - 0.45) / 0.12); return q * q * (3 - 2 * q); }
+// ladera de roca en un vértice: borde interior = borde de la hierba (un poco por dentro, para no dejar rendijas de arena)
+function rocaV(th, i, vr = 0) { const R0 = islandR(th + vr, 5, CITY.seed), ri = R0 - anchoCosta(th) - 0.04, e = rocaPeso(th);
+  return { ri, ro: ri + (R0 - ri + 0.03 + h2(i, 31) * 0.07) * e, zo: lerp(Z_GRASS - 0.004, Z_SAND * 0.55 + h2(i, 33) * 0.06, e) }; }
+// altura de la ladera de roca en (x, y) (para apoyar las piedras sueltas encima)
+function rocaZ(x, y) { const th = Math.atan2(y, x), v = rocaV(th, 0), r = Math.hypot(x, y); return lerp(Z_GRASS, v.zo, clamp((r - v.ri) / Math.max(0.05, v.ro - v.ri))); }
 // ancho de la franja de costa (sin girar): roca estrecha; playa ancha, que se ensancha lejos de las rocas
 function anchoCosta(th) { if (rocoso(th)) return 0.42; const v = costaV(th), q = distMuelle(th) <= 0.75 ? 1 : clamp((0.45 - v) / 0.5); return 0.42 + 0.75 * q * q * (3 - 2 * q); }
 function callesActivas(activos) {   // calles que tocan manzanas con algo construido, a lo largo de esas manzanas
@@ -567,14 +573,14 @@ function drawRock(x, y, z, s) { const [bx, by] = P(x, y, z); const u = U() * s;
 function drawCityGround(plan, zf, alpha = 1) {
   if (alpha <= 0) return; ctx.save(); ctx.globalAlpha = alpha;
   const T = trazado(), z = zf(0, 0) + 0.004, ASF = '#A9AFAB', CAM = '#E2D9C6', TIERRA = '#C9A578', N = CITY.shape.length, VR = VIEW_ROT * Math.PI / 2;
-  // costa rocosa: la franja de costa es roca (arriba y en el canto que se ve), con el mismo ancho en toda la isla
-  for (let i = 0; i < N; i++) { const a0 = i / N * 2 * Math.PI, a1 = (i + 1) / N * 2 * Math.PI; if (!rocoso(a0) || !rocoso(a1)) continue;
-    const r0 = islandR(a0 + VR, 5, CITY.seed), r1 = islandR(a1 + VR, 5, CITY.seed), w0 = anchoCosta(a0), w1 = anchoCosta(a1);
+  // costa rocosa (corregido 9 nov): ladera de roca desde el borde de la hierba (a su altura) hasta el mar, con el borde irregular;
+  // en los extremos del tramo se estrecha poco a poco hacia la playa (antes: franja plana tipo muro, con arena asomando y corte brusco)
+  for (let i = 0; i < N; i++) { const a0 = i / N * 2 * Math.PI, a1 = (i + 1) / N * 2 * Math.PI, e0 = rocaPeso(a0), e1 = rocaPeso(a1); if (e0 <= 0 && e1 <= 0) continue;
     const pt = (a, r, zz) => { const [rx, ry] = rotXY(Math.cos(a) * r, Math.sin(a) * r); return P(rx, ry, zz); };
-    const col = h2(i, 21) < 0.5 ? '#8E8B85' : '#85827C';
-    fillPoly([pt(a0, r0, Z_SAND + 0.006), pt(a1, r1, Z_SAND + 0.006), pt(a1, r1 - w1, Z_SAND + 0.006), pt(a0, r0 - w0, Z_SAND + 0.006)], col);
+    const v0 = rocaV(a0, i, VR), v1 = rocaV(a1, i + 1, VR), col = ['#8E8B85', '#85827C', '#98958E'][Math.floor(h2(i, 21) * 3)];
+    fillPoly([pt(a0, v0.ri, Z_GRASS - 0.004), pt(a1, v1.ri, Z_GRASS - 0.004), pt(a1, v1.ro, v1.zo), pt(a0, v0.ro, v0.zo)], col);
     const [nx, ny] = rotXY(Math.cos((a0 + a1) / 2), Math.sin((a0 + a1) / 2));
-    if (nx + ny > 0) fillPoly([pt(a0, r0, Z_SAND + 0.006), pt(a1, r1, Z_SAND + 0.006), pt(a1, r1, 0), pt(a0, r0, 0)], shade(col, -0.18)); }
+    if (nx + ny > 0) fillPoly([pt(a0, v0.ro, v0.zo), pt(a1, v1.ro, v1.zo), pt(a1, v1.ro, 0), pt(a0, v0.ro, 0)], shade(col, -0.2)); }
   // calles: solo las que tocan manzanas con algo construido, recortadas a ellas y a la isla
   const act = plan.activos.map(bi => T.blocks[bi]), calles = [];
   const dentro = (x, y) => Math.hypot(x, y) < islandR(Math.atan2(y, x) + VR, 5, CITY.seed) - anchoCosta(Math.atan2(y, x)) - 0.3;
@@ -641,7 +647,7 @@ function drawParks(plan, zf, push) {
       for (let i = 12; i >= 0; i--) { const t2 = i / 12 * 2 - 1, w = 0.055 * Math.sqrt(1 - t2 * t2), [a, b] = rotXY(p0[0] + dx / m * t2 * 0.32 + dy / m * w, p0[1] + dy / m * t2 * 0.32 - dx / m * w); hull.push(P(a, b, z)); }
       fillPoly(hull, col); const [cx, cy] = P(x, y, z + 0.02); ctx.fillStyle = '#2B2B2B'; ctx.beginPath(); ctx.ellipse(cx, cy, U() * 0.035, U() * 0.018, 0, 0, 7); ctx.fill(); }); });
   for (const a of plan.arboles || []) { const [x, y] = rotXY(a.x, a.y), z = zf(x, y); push(x + y, () => a.palm ? drawPalm({ x, y, s: a.s * 1.1 }, z) : drawTree({ x, y, s: a.s }, z)); }
-  for (const r of plan.rocas || []) { const [x, y] = rotXY(r.x, r.y); push(x + y, () => drawRock(x, y, r.agua ? 0.02 : Z_SAND, r.s)); }
+  for (const r of plan.rocas || []) { const [x, y] = rotXY(r.x, r.y); push(x + y, () => drawRock(x, y, r.agua ? 0.02 : rocaZ(r.x, r.y), r.s)); }
 }
 function zonaCentro(plan, k) { const L = k === 'bas' ? plan.basics : plan.items.filter(i => i.x != null); if (!L.length) return null; const xs = L.map(l => l.x), ys = L.map(l => l.y); return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 }; }
 /* sitios especiales más grandes */
