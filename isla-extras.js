@@ -77,6 +77,52 @@ function drawTreeHouse(o, z) {
 // tamaño de los carteles: 1 en la web (se leen con zoom o tocando el edificio); los vídeos (desde el Día 8) usan
 // SIGN_SCALE = 1.6 para que se lean en el móvil en los planos cercanos (en los lejanos siguen pequeños y no se amontonan)
 var SIGN_SCALE = 1;
+/* ---- Día 8 (10 nov): bomberos, iglesia, parque, piscina pública y escenario (todo dentro de su parcela, ~0,85) ---- */
+function sq(x0, y0, x1, y1, zz, col) { fillPoly([P(x0, y0, zz), P(x1, y0, zz), P(x1, y1, zz), P(x0, y1, zz)], col); }
+function drawBomberos(o, z) {
+  shopWithSign(o, z, '#D7263D', 'BOMBEROS', '#FFFFFF', '#F6E3E3');
+  const [x, y] = enFrente(o, 0.42 * ((o.face === 'N' || o.face === 'W') ? -1 : 1), 0.12), rot = o.face === 'E' || o.face === 'W', w = rot ? 0.17 : 0.34, d = rot ? 0.34 : 0.17;
+  shadowAt(x, y, z, 0.2, 0.1);
+  box(x - w / 2, y - d / 2, w, d, 0.13, z + 0.02, '#D7263D', { tcol: '#E9535F' });
+  box(x - w / 2 + (rot ? 0.02 : 0.03), y - d / 2 + (rot ? 0.03 : 0.02), w - (rot ? 0.04 : 0.06), d - (rot ? 0.06 : 0.04), 0.03, z + 0.15, '#EDEDED');
+  for (const q of [0.25, 0.75]) { const [wx, wy] = P(x - w / 2 + w * (rot ? 0.5 : q), y - d / 2 + d * (rot ? q : 0.5), z); ctx.fillStyle = '#222'; ctx.beginPath(); ctx.ellipse(wx, wy, U() * 0.035, U() * 0.02, 0, 0, 7); ctx.fill(); }
+}
+function drawIglesia(o, z) {
+  shadowAt(o.x, o.y, z, 0.42, 0.2);
+  const [tx, ty] = enFrente(o, -0.08, -0.26), torre = () => { box(tx - 0.09, ty - 0.09, 0.18, 0.18, 0.92, z, '#FBF7EE', { tcol: '#EFE7D6' });
+    const [cx, cy] = P(tx, ty, z + 0.92), u = U(); ctx.fillStyle = '#B5452E'; ctx.beginPath(); ctx.moveTo(cx - 0.13 * u, cy + 0.02 * u); ctx.lineTo(cx, cy - 0.2 * u); ctx.lineTo(cx + 0.13 * u, cy + 0.02 * u); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#6B4A2B'; ctx.fillRect(cx - 0.008 * u, cy - 0.34 * u, 0.016 * u, 0.15 * u); ctx.fillRect(cx - 0.045 * u, cy - 0.3 * u, 0.09 * u, 0.016 * u);
+    const [bx, by] = P(tx, ty + 0.09, z + 0.68); ctx.fillStyle = '#E0B13A'; ctx.beginPath(); ctx.arc(bx, by, 0.035 * u, Math.PI, 2 * Math.PI); ctx.fill(); };
+  const delante = tx + ty > o.x + o.y;
+  if (!delante) torre();
+  drawHouseF({ x: o.x, y: o.y, roof: '#B5452E', h: 0.46, wall: '#FBF7EE' }, z, o.face);
+  if (delante) torre();
+}
+function drawParque(o, z, t) {
+  const g = 0.42; sq(o.x - g, o.y - g, o.x + g, o.y + g, z + 0.006, '#7CC562');
+  sq(o.x - 0.06, o.y - g, o.x + 0.06, o.y + g, z + 0.008, '#E2D9C6'); sq(o.x - g, o.y - 0.06, o.x + g, o.y + 0.06, z + 0.008, '#E2D9C6');
+  const [fx, fy] = P(o.x, o.y, z + 0.01), u = U(); ctx.fillStyle = '#C9CFD6'; ctx.beginPath(); ctx.ellipse(fx, fy, 0.16 * u, 0.08 * u, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = '#4FC3E8'; ctx.beginPath(); ctx.ellipse(fx, fy, 0.12 * u, 0.06 * u, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.beginPath(); ctx.ellipse(fx, fy - 0.06 * u - Math.abs(Math.sin(t * 5)) * 0.02 * u, 0.02 * u, 0.06 * u, 0, 0, 7); ctx.fill();
+  for (const [dx, dy] of [[-0.24, -0.24], [0.24, 0.24]]) box(o.x + dx - 0.12, o.y + dy - 0.03, 0.24, 0.06, 0.06, z, '#B07443', { tcol: '#C98C57' });
+  for (const [dx, dy, s] of [[-0.3, -0.05, 0.55], [0.26, -0.26, 0.75], [-0.26, 0.24, 0.7], [0.3, 0.06, 0.6]]) drawTree({ x: o.x + dx, y: o.y + dy, s, col: '#3E9A4F' }, z);
+}
+function drawPiscinaPublica(o, z, t) {
+  const g = 0.42; sq(o.x - g, o.y - g, o.x + g, o.y + g, z + 0.006, '#F4EFE6');
+  sq(o.x - 0.3, o.y - 0.3, o.x + 0.3, o.y + 0.22, z + 0.008, '#3FA9D6'); sq(o.x - 0.27, o.y - 0.27, o.x + 0.27, o.y + 0.19, z + 0.01, '#4FC3E8');
+  for (let i = 1; i < 4; i++) { const a = P(o.x - 0.27 + i * 0.135, o.y - 0.27, z + 0.012), b = P(o.x - 0.27 + i * 0.135, o.y + 0.19, z + 0.012); ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = Math.max(1, U() * 0.01); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+  const u = U(); for (const [dx, dy, col] of [[-0.3, 0.34, '#F2614C'], [0.05, 0.34, '#FFC83D'], [0.32, 0.34, '#2E8FA8']]) { const [bx, by] = P(o.x + dx, o.y + dy, z); ctx.fillStyle = '#9A9A9A'; ctx.fillRect(bx - 0.006 * u, by - 0.3 * u, 0.012 * u, 0.3 * u);
+    ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(bx, by - 0.3 * u, 0.13 * u, 0.06 * u, 0, Math.PI, 2 * Math.PI); ctx.fill(); ctx.fillRect(bx - 0.13 * u, by - 0.3 * u, 0.26 * u, 0.012 * u); }
+}
+function drawEscenario(o, z, t) {
+  const back = (o.face === 'N' || o.face === 'W'), [f, sd] = FRENTE[o.face || 'S'], c = (a, b) => [o.x + f[0] * a + sd[0] * b, o.y + f[1] * a + sd[1] * b];
+  shadowAt(o.x, o.y, z, 0.42, 0.2);
+  box(o.x - 0.34, o.y - 0.3, 0.68, 0.6, 0.12, z, '#7C4A26', { tcol: '#B07443' });
+  const pared = () => { const [ax, ay] = c(-0.27, -0.32), [bx, by] = c(-0.27, 0.32); fillPoly([P(ax, ay, z + 0.12), P(bx, by, z + 0.12), P(bx, by, z + 0.62), P(ax, ay, z + 0.62)], '#7A1F2B'); fillPoly([P(ax, ay, z + 0.56), P(bx, by, z + 0.56), P(bx, by, z + 0.62), P(ax, ay, z + 0.62)], '#E0B13A'); };
+  const focos = () => { for (const b of [-0.3, 0.3]) { const [px, py] = c(0.2, b), [sx, sy] = P(px, py, z + 0.12), u = U(); ctx.fillStyle = '#333'; ctx.fillRect(sx - 0.008 * u, sy - 0.42 * u, 0.016 * u, 0.42 * u);
+      ctx.fillStyle = Math.sin(t * 6 + b * 9) > 0 ? '#FFE45C' : '#FF8FB1'; ctx.beginPath(); ctx.arc(sx, sy - 0.44 * u, 0.035 * u, 0, 7); ctx.fill(); } };
+  if (!back) { pared(); focos(); } else { focos(); pared(); }
+}
 function signBoard(x, y, z, kind, label) {
   const [bx, by] = P(x, y, z), k = SIGN_SCALE;
   if (k !== 1) { ctx.save(); ctx.translate(bx, by); ctx.scale(k, k); ctx.translate(-bx, -by); signBoard0(bx, by, kind, label); ctx.restore(); return; }
@@ -112,7 +158,7 @@ function drawPuerto(o, z) {
   for (const s of [-1, 1]) for (const k of [1.2, 2.3]) { box(o.x + cx * k - cy * 0.17 * s - 0.03, o.y + cy * k + cx * 0.17 * s - 0.03, 0.06, 0.06, 0.22, z - 0.12, C.woodDark); }
   const [sx, sy] = P(o.x - cy * 0.25, o.y + cx * 0.25, z); signBoard(o.x - cy * 0.25, o.y + cx * 0.25, z, '#FFFFFF', 'PUERTO');
 }
-function drawRestaurant(o, z) { const fc = o.face || 'S', atras = fc === 'N' || fc === 'W'; if (atras) drawTerrazaF(o, z, o.color || '#C8233A'); shopWithSign(o, z, o.color || '#C8233A', 'RESTAURANTE', '#FFFFFF'); if (!atras) drawTerrazaF(o, z, o.color || '#C8233A'); }
+function drawRestaurant(o, z) { const fc = o.face || 'S', atras = fc === 'N' || fc === 'W'; if (atras) drawTerrazaF(o, z, o.color || '#C8233A'); shopWithSign(o, z, o.color || '#C8233A', o.cartel || 'RESTAURANTE', '#FFFFFF'); if (!atras) drawTerrazaF(o, z, o.color || '#C8233A'); }
 function drawUnicornio(o, z) {
   shadowAt(o.x, o.y, z, 0.42, 0.2);
   drawHouse({ x: o.x, y: o.y, roof: '#C9A2F2', h: 0.44, wall: '#FFE4F2' }, z);
@@ -214,6 +260,13 @@ function drawCustom(o, z, t) {
   if (f === 'churreria') return shopWithSign(o, z, '#E9A93B', 'CHURROS', '#FFF3D6', '#FFF6E6');
   if (f === 'cuartel') { shopWithSign(o, z, '#5B6B3A', 'CUARTEL', '#E9EDDC', '#C9C3A6'); const [bx, by] = enFrente(o, 0.4, -0.28); for (let i = 0; i < 3; i++) box(bx - 0.08 + i * 0.055, by - 0.03, 0.05, 0.06, 0.05, z, '#B9A77A'); const [fx, fy] = enFrente(o, 0.36, 0.3); drawFlag(fx, fy, z, t, 'espana'); return; }
   if (f === 'colegio') { shopWithSign(o, z, '#E9A93B', 'COLE', '#FFFFFF', o.pared || '#FFFFFF'); return; }
+  if (f === 'pollo') return shopWithSign(o, z, '#C8233A', 'POLLO FRITO', '#FFFFFF', '#FFF4E0');
+  if (f === 'recreativos') return shopWithSign(o, z, '#6B3FD8', 'RECREATIVOS', '#FFE45C', '#EDE6FF');
+  if (f === 'bomberos') return drawBomberos(o, z);
+  if (f === 'iglesia') return drawIglesia(o, z);
+  if (f === 'parque') return drawParque(o, z, t);
+  if (f === 'piscina_publica') return drawPiscinaPublica(o, z, t);
+  if (f === 'escenario') return drawEscenario(o, z, t);
   if (f === 'refugio') { shadowAt(o.x, o.y, z, 0.42, 0.2); drawHouseF({ x: o.x, y: o.y, roof: '#3E9A4F', h: 0.4, wall: '#FCEBD2' }, z, o.face); return; }
   if ((o.det || o.detalles || []).includes('piscina')) {   // jardín propio con piscina, dentro de su parcela
     const g = 0.42; fillPoly([P(o.x - g, o.y - g, z + 0.006), P(o.x + g, o.y - g, z + 0.006), P(o.x + g, o.y + g, z + 0.006), P(o.x - g, o.y + g, z + 0.006)], '#86CC6E');
@@ -232,7 +285,7 @@ function drawCustom(o, z, t) {
 }
 
 /* --- detalles --- */
-function drawCat(x, y, z, t, s = 1, col = '#F29F4B') {
+function drawCat(x, y, z, t, s = 1, col = '#F29F4B', col2) {
   const [bx, by] = P(x, y, z); const u = U() * s; const bob = Math.sin(t * 3 + x) * 0.01 * u;
   ctx.fillStyle = 'rgba(20,40,40,0.2)'; ctx.beginPath(); ctx.ellipse(bx, by, 0.1 * u, 0.04 * u, 0, 0, 7); ctx.fill();
   ctx.fillStyle = col;
@@ -241,6 +294,7 @@ function drawCat(x, y, z, t, s = 1, col = '#F29F4B') {
   for (const dx of [0.04, 0.1]) { ctx.beginPath(); ctx.moveTo(bx + dx * u - 0.02 * u, by - 0.17 * u + bob); ctx.lineTo(bx + dx * u, by - 0.22 * u + bob); ctx.lineTo(bx + dx * u + 0.02 * u, by - 0.17 * u + bob); ctx.fill(); }
   ctx.strokeStyle = col; ctx.lineWidth = 0.02 * u; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(bx - 0.08 * u, by - 0.08 * u); ctx.quadraticCurveTo(bx - 0.16 * u, by - 0.12 * u + Math.sin(t * 4 + x) * 0.03 * u, bx - 0.13 * u, by - 0.2 * u); ctx.stroke();
+  if (col2) { ctx.fillStyle = col2; ctx.beginPath(); ctx.ellipse(bx - 0.025 * u, by - 0.09 * u, 0.045 * u, 0.035 * u, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(bx + 0.085 * u, by - 0.165 * u + bob, 0.028 * u, Math.PI, 2 * Math.PI); ctx.fill(); }   // manchas (gato de dos colores)
   ctx.fillStyle = col === '#2B2B2B' ? '#E9D35B' : C.navy; for (const dx of [0.055, 0.085]) { ctx.beginPath(); ctx.arc(bx + dx * u, by - 0.145 * u + bob, 0.007 * u, 0, 7); ctx.fill(); }
 }
 function drawDog(x, y, z, t, s = 1, col = '#C58B4E', ears = '#8A5A2E', small = false) {
@@ -272,6 +326,7 @@ function drawFlag(x, y, z, t, kind) {
   const quad = (q0, q1, r0, r1, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(x0 + fw * q0, y0 + fh * r0 + wv(q0)); ctx.lineTo(x0 + fw * q1, y0 + fh * r0 + wv(q1)); ctx.lineTo(x0 + fw * q1, y0 + fh * r1 + wv(q1)); ctx.lineTo(x0 + fw * q0, y0 + fh * r1 + wv(q0)); ctx.closePath(); ctx.fill(); };
   if (kind === 'peru') { quad(0, 1 / 3, 0, 1, '#D91023'); quad(1 / 3, 2 / 3, 0, 1, '#FFFFFF'); quad(2 / 3, 1, 0, 1, '#D91023'); }
   else if (kind === 'espana') { quad(0, 1, 0, 0.25, '#AA151B'); quad(0, 1, 0.25, 0.75, '#F1BF00'); quad(0, 1, 0.75, 1, '#AA151B'); }
+  else if (kind === 'marruecos') { quad(0, 1, 0, 1, '#C1272D'); const cx = x0 + fw * 0.5, cy = y0 + fh * 0.5 + wv(0.5), r = fh * 0.3; ctx.strokeStyle = '#006233'; ctx.lineWidth = Math.max(1, u * 0.012); ctx.beginPath(); for (let i = 0; i <= 5; i++) { const a = -Math.PI / 2 + i * 4 * Math.PI / 5; ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } ctx.stroke(); }
   else if (kind === 'canarias') { quad(0, 1 / 3, 0, 1, '#FFFFFF'); quad(1 / 3, 2 / 3, 0, 1, '#0768A9'); quad(2 / 3, 1, 0, 1, '#FCD116'); }
   else if (kind === 'zamora') { for (let i = 0; i < 8; i++) quad(0, 1, i / 8, (i + 1) / 8, '#C8102E'); quad(0, 0.35, 0, 0.3, '#2E7D32'); }
   else if (kind === 'cuba') { for (let i = 0; i < 5; i++) quad(0, 1, i / 5, (i + 1) / 5, i % 2 ? '#FFFFFF' : '#002A8F');
@@ -279,6 +334,9 @@ function drawFlag(x, y, z, t, kind) {
 }
 function drawFlagPeru(x, y, z, t) { drawFlag(x, y, z, t, 'peru'); }
 function drawHamster(x, y, z, t, s = 1) { drawCobaya(x, y, z, t, s * 0.8, '#E59A4C'); }
+function drawHeartAt(x, y, z, rr) { const [hx, hy] = P(x, y, z), r = rr * U();   // corazón grande de pie sobre el tejado
+  ctx.fillStyle = '#E8384F'; ctx.beginPath(); ctx.moveTo(hx, hy + r * 0.9); ctx.bezierCurveTo(hx - r * 1.6, hy - r * 0.2, hx - r * 0.8, hy - r * 1.4, hx, hy - r * 0.5); ctx.bezierCurveTo(hx + r * 0.8, hy - r * 1.4, hx + r * 1.6, hy - r * 0.2, hx, hy + r * 0.9); ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.beginPath(); ctx.ellipse(hx - r * 0.45, hy - r * 0.55, r * 0.2, r * 0.12, -0.6, 0, 7); ctx.fill(); }
 function drawHeart(o, z) { const fc = o.face || 'S', [hx, hy] = (fc === 'E' || fc === 'W') ? P(o.x + 0.275, o.y - 0.12, z + 0.24) : P(o.x + 0.12, o.y + 0.275, z + 0.24); const u = U(); const r = 0.05 * u;
   ctx.fillStyle = '#E8384F'; ctx.beginPath(); ctx.moveTo(hx, hy + r * 1.4); ctx.bezierCurveTo(hx - r * 2.2, hy - r * 0.2, hx - r * 0.9, hy - r * 1.9, hx, hy - r * 0.6); ctx.bezierCurveTo(hx + r * 0.9, hy - r * 1.9, hx + r * 2.2, hy - r * 0.2, hx, hy + r * 1.4); ctx.fill(); }
 function drawFlowers(o, z, vis = 1) { const cols = ['#F2614C', '#FFC83D', '#E76F8A', '#B66DFF'];
@@ -294,7 +352,7 @@ function alturaTejado(o) {   // [altura de la cumbrera, ¿tejado plano?]
   if (['tienda'].includes(f)) return [0.48, true];
   if (['bar'].includes(f)) return [0.44, true];
   if (['veterinario'].includes(f)) return [0.38, true];
-  if (['kebab', 'pizzeria', 'moviles', 'comisaria', 'restaurante', 'lavanderia', 'super', 'peluqueria', 'mascotas', 'kayaks', 'mexicano', 'carniceria', 'churreria', 'cuartel', 'colegio'].includes(f)) return [0.42, true];
+  if (['kebab', 'pizzeria', 'moviles', 'comisaria', 'restaurante', 'lavanderia', 'super', 'peluqueria', 'mascotas', 'kayaks', 'mexicano', 'carniceria', 'churreria', 'cuartel', 'colegio', 'pollo', 'recreativos', 'bomberos'].includes(f)) return [0.42, true];
   if (f === 'refugio') return [0.7, false];
   if (f === 'perrera') return [0.68, false];
   if (f === 'tigre' || f === 'unicornio') return [0.74, false];
@@ -334,12 +392,16 @@ function drawDetails(o, z, t, push) {   // push(d, fn): cada detalle con su prop
   const suelo = (draw) => { const [x, y] = pet(); put(x + y, () => draw(x, y)); };
   for (const d of det) {
     const k = np + 1;
-    const cat = (col, s = 1.2) => suelo((x, y) => drawCat(x, y, z, t + k, s, col));
+    const cat = (col, s = 1.2, col2) => suelo((x, y) => drawCat(x, y, z, t + k, s, col, col2));
     const dog = (...a) => suelo((x, y) => drawDog(x, y, z, t + k, ...a));
     if (d === 'gato' || d === 'gato_naranja') cat(undefined);
     if (d === 'gato_blanco') cat('#F4F4F0');
     if (d === 'gato_gris') cat('#7C7C80');
     if (d === 'gato_negro') cat('#2B2B2B', 1.1);
+    if (d === 'gato_gris_blanco') cat('#F4F4F0', 1.2, '#7C7C80');
+    if (d === 'gato_blanco_marron') cat('#F4F4F0', 1.2, '#8B5A2B');
+    if (d === 'arbol') { const [x, y] = enFrente(o, 0.42 * vis, -0.3); put(x + y, () => drawTree({ x, y, s: 0.75 }, z)); }
+    if (d === 'corazon_tejado') { const [hx, hy] = enFrente(o, plano ? -0.05 : 0, 0); put(arriba + 0.03, () => drawHeartAt(hx, hy, z + hTop + 0.13, 0.16)); }   // grande, con la punta apoyada en el centro de la cumbrera
     if (d === 'gatos') { cat('#4A4A4A', 1.2); cat(undefined, 1.2); }
     if (d === 'gatos_techo') { const a = techo(), b = techo(); put(arriba, () => { drawCat(a[0], a[1], a[2], t, 1.05, '#4A4A4A'); drawCat(b[0], b[1], b[2], t + 1, 1.05); }); }
     if (d === 'gato_blanco_techo') { const a = techo(); put(arriba, () => drawCat(a[0], a[1], a[2], t, 1.1, '#F4F4F0')); }
@@ -360,7 +422,7 @@ function drawDetails(o, z, t, push) {   // push(d, fn): cada detalle con su prop
     if (d === 'paqueteria') { const [x, y] = enFrente(o, 0.38, -0.32); put(x + y, () => { box(x - 0.07, y - 0.05, 0.14, 0.1, 0.22, z, '#F2C94C', { tcol: '#F7DA7A' }); for (const k of [0.06, 0.13]) fillPoly(faceL(x - 0.06, x + 0.06, z + k, z + k + 0.05, y + 0.05), '#C9A230'); }); }
     if (d === 'corazon') put(arriba, () => drawHeart(o, z));
     if (d === 'flores') { const [x, y] = enFrente(o, 0.34 * vis, 0); put(x + y, () => drawFlowers(o, z, vis)); }
-    if (['peru', 'espana', 'zamora', 'cuba', 'canarias'].includes(d)) {
+    if (['peru', 'espana', 'zamora', 'cuba', 'canarias', 'marruecos'].includes(d)) {
       const [x, y] = plano ? enFrente(o, -0.12, 0.2 - flags * 0.22) : enFrente(o, 0, 0.22 - flags * 0.2), fl = flags++;
       put(arriba + 0.01, () => drawFlag(x, y, z + hTop - (plano ? 0 : 0.02), t + fl, d)); }
   }

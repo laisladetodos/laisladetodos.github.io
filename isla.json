@@ -1,8 +1,8 @@
 {
- "dia": 7,
- "habitantes": 198,
+ "dia": 8,
+ "habitantes": 215,
  "radio": 3.6,
- "actualizado": "2026-11-09",
+ "actualizado": "2026-11-10",
  "construcciones": [
   {
    "tipo": "casa",
@@ -11,7 +11,10 @@
    "color": "#E76F8A",
    "usuario": "@celia.mart_",
    "nombre": "La primera casa de la isla",
-   "pared": "#FFD1E0"
+   "pared": "#FFD1E0",
+   "detalles": [
+    "corazon_tejado"
+   ]
   },
   {
    "tipo": "casa",
@@ -166,7 +169,11 @@
   {
    "tipo": "negocio",
    "forma": "restaurante",
-   "dia": 3
+   "dia": 3,
+   "cartel": "MARROQUÍ",
+   "detalles": [
+    "marruecos"
+   ]
   },
   {
    "tipo": "negocio",
@@ -411,7 +418,11 @@
    "forma": "casa",
    "dia": 5,
    "color": "#A50044",
-   "pared": "#004D98"
+   "pared": "#004D98",
+   "detalles": [
+    "gato_gris_blanco"
+   ],
+   "usuario": "@aracelis.viloria2"
   },
   {
    "tipo": "negocio",
@@ -547,9 +558,73 @@
    "color": "#9FE7E0",
    "pared": "#CDB2EC",
    "dia": 7
+  },
+  {
+   "tipo": "negocio",
+   "forma": "parque",
+   "dia": 8,
+   "usuario": "@jnictgyhyct"
+  },
+  {
+   "tipo": "negocio",
+   "forma": "piscina_publica",
+   "dia": 8,
+   "usuario": "@bjl594"
+  },
+  {
+   "tipo": "negocio",
+   "forma": "escenario",
+   "dia": 8
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 8,
+   "color": "#2E8FA8",
+   "detalles": [
+    "piscina"
+   ]
+  },
+  {
+   "tipo": "negocio",
+   "forma": "pollo",
+   "dia": 8
+  },
+  {
+   "tipo": "negocio",
+   "forma": "recreativos",
+   "dia": 8
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 8,
+   "color": "#E9A93B",
+   "detalles": [
+    "gato_blanco_marron"
+   ]
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 8,
+   "color": "#2E6FD8",
+   "detalles": [
+    "arbol"
+   ]
+  },
+  {
+   "tipo": "negocio",
+   "forma": "iglesia",
+   "dia": 8
+  },
+  {
+   "tipo": "negocio",
+   "forma": "bomberos",
+   "dia": 8
   }
  ],
- "basicas": 131,
- "nuevos_hoy": 11,
+ "basicas": 140,
+ "nuevos_hoy": 17,
  "ferry_max_nuevos": 65
 }
