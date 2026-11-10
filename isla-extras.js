@@ -535,15 +535,29 @@ function callesActivas(activos) {   // calles que tocan manzanas con algo constr
   }
   return out;
 }
+// Nada encima del río de los kayaks (10 nov): se planifica, se calcula el río final y, si algo ha caído encima, se vuelve a
+// planificar sin esas parcelas. Lo que ya estaba no se mueve (esas parcelas no eran suyas); solo cambia lo que pisaba el río.
 function planCiudad(items, nBasic, seed) {
+  const fuera = new Set(), base = items.map(o => ({ ...o }));
+  for (let pasada = 0; ; pasada++) {
+    items.forEach((o, i) => { for (const k of ['x', 'y', 'face', 'lot']) if (k in base[i]) o[k] = base[i][k]; else delete o[k]; });
+    const plan = planCiudad0(items, nBasic, seed, fuera), rio = rioKayak(plan); if (!rio || pasada >= 4) return plan;
+    const cerca = (x, y) => rio.some(([a, b]) => Math.hypot(a - x, b - y) < 0.62); let n = fuera.size;
+    for (const l of trazado().lots) if (cerca(l.x, l.y)) fuera.add(l.i);
+    if (fuera.size === n) return plan;
+  }
+}
+function planCiudad0(items, nBasic, seed, fuera) {
   const _vr = VIEW_ROT; VIEW_ROT = 0; CITY = null;
   const T = trazado(), libres = new Set(T.lots.map(l => l.i)), usados = [];
+  const iK = items.findIndex(o => o.forma === 'kayaks' && (o.det || o.detalles || []).includes('rampa_kayak')); let idx = -1;   // el río solo cuenta para lo que llega después de la tienda de kayaks
   const especiales = items.filter(it => ESPECIALES.includes(it.forma));
   const lejosEsp = l => especiales.every(e => e.x == null || Math.hypot(e.x - l.x, e.y - l.y) > (e.forma === 'huerto' ? 2.4 : 1.7));
   for (const l of T.lots) if (l.dist < 1.95) libres.delete(l.i);                                  // plaza grande y abierta
   const jardines = [];
-  const elegir = score => { let best = null, bs = 1e9; for (const i of libres) { const l = T.lots[i]; if (enSectorBasico(l.th) && l.dist > 1.8) continue; if (!lejosEsp(l)) continue; const s = score(l); if (s < bs) { bs = s; best = l; } } if (best) libres.delete(best.i); return best; };
+  const elegir = score => { let best = null, bs = 1e9; for (const i of libres) { const l = T.lots[i]; if (iK >= 0 && idx > iK && fuera.has(i)) continue; if (enSectorBasico(l.th) && l.dist > 1.8) continue; if (!lejosEsp(l)) continue; const s = score(l); if (s < bs) { bs = s; best = l; } } if (best) libres.delete(best.i); return best; };
   for (const it of items) {
+    idx++;
     if (ESPECIALES.includes(it.forma)) continue;
     const neg = !['casa', 'tigre', 'unicornio'].includes(it.forma || 'casa');
     const l = elegir(neg ? (q => q.dist * (1 + 0.12 * h2(q.i, 9)) - (q.main ? 1.2 : 0)) : (q => q.dist * (1 + 0.18 * h2(q.i, 11)) + (q.main ? 0.7 : 0)));
@@ -552,7 +566,7 @@ function planCiudad(items, nBasic, seed) {
       for (const m of T.lots) if (libres.has(m.i) && m.b === l.b && m.face === l.face && Math.hypot(m.x - l.x, m.y - l.y) < 1.2) { libres.delete(m.i); jardines.push({ ...m, de: it.u || it.usuario }); } }
   }
   const basics = [];
-  for (const l of [...T.lots].filter(l => libres.has(l.i) && enSectorBasico(l.th) && lejosEsp(l)).sort((a, b) => a.dist - b.dist)) { if (basics.length >= nBasic) break; const ns = l.face === 'N' || l.face === 'S';
+  for (const l of [...T.lots].filter(l => libres.has(l.i) && !fuera.has(l.i) && enSectorBasico(l.th) && lejosEsp(l)).sort((a, b) => a.dist - b.dist)) { if (basics.length >= nBasic) break; const ns = l.face === 'N' || l.face === 'S';
     for (const k of [-1, 1]) if (basics.length < nBasic) basics.push({ x: l.x + (ns ? k * 0.245 : 0), y: l.y + (ns ? 0 : k * 0.245), face: l.face, forma: 'basica', lot: l.i });
     libres.delete(l.i); usados.push(l); }
   // radio del pueblo por ángulo
