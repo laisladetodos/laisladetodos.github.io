@@ -401,6 +401,25 @@ function drawDetails(o, z, t, push) {   // push(d, fn): cada detalle con su prop
     if (d === 'gato_gris_blanco') cat('#F4F4F0', 1.2, '#7C7C80');
     if (d === 'gato_blanco_marron') cat('#F4F4F0', 1.2, '#8B5A2B');
     if (d === 'arbol') { const [x, y] = enFrente(o, 0.42 * vis, -0.3); put(x + y, () => drawTree({ x, y, s: 0.75 }, z)); }
+    if (d === 'placas_solares') put(arriba + 0.015, () => {   // placas solares sobre la azotea (o el tejado)
+      const zz = z + hTop + 0.012, rot = o.face === 'E' || o.face === 'W';
+      for (const [i, j] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const cx = o.x + (rot ? 0.11 : 0.14) * i, cy = o.y + (rot ? 0.14 : 0.11) * j, w = rot ? 0.09 : 0.11, h = rot ? 0.11 : 0.09;
+        fillPoly([P(cx - w, cy - h, zz), P(cx + w, cy - h, zz + 0.03), P(cx + w, cy + h, zz + 0.03), P(cx - w, cy + h, zz)], '#1F3A68');
+        ctx.strokeStyle = '#6E95D6'; ctx.lineWidth = Math.max(1, U() * 0.006); for (const q of [-0.33, 0.33]) { const a = P(cx + w * q, cy - h, zz + 0.015 * (1 + q)), b = P(cx + w * q, cy + h, zz + 0.015 * (1 + q)); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); } } });
+    if (d === 'neones') put(arriba + 0.02, () => {   // luces de neón por el borde de la azotea
+      const rot = o.face === 'E' || o.face === 'W', w = rot ? 0.26 : 0.3, h = rot ? 0.3 : 0.26, zz = z + hTop + 0.01, u = U();
+      const pts = [[o.x - w, o.y - h], [o.x + w, o.y - h], [o.x + w, o.y + h], [o.x - w, o.y + h]].map(([x, y]) => P(x, y, zz));
+      ctx.save(); ctx.lineJoin = 'round';
+      for (const [col, off] of [['#FF4FD8', 0], ['#3FF0FF', 0.03]]) { const q = [[o.x - w + off, o.y - h + off], [o.x + w - off, o.y - h + off], [o.x + w - off, o.y + h - off], [o.x - w + off, o.y + h - off]].map(([x, y]) => P(x, y, zz + off));
+        ctx.shadowColor = col; ctx.shadowBlur = u * 0.25; ctx.strokeStyle = col; ctx.lineWidth = Math.max(2.5, u * 0.04); ctx.globalAlpha = 1; ctx.beginPath(); q.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.stroke(); }
+      ctx.restore(); });
+    if (d === 'estatua_gorila') { const [x, y] = pet(); put(x + y + 0.02, () => {   // estatua de un gorila (genérico) sobre un pedestal, ×1,7 y en el jardín que se ve
+      box(x - 0.13, y - 0.13, 0.26, 0.26, 0.16, z, '#B9B4AA', { tcol: '#D6D1C7' });
+      const [bx, by] = P(x, y, z + 0.16), u = U() * 1.7, g = '#3E3B38';
+      ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(bx, by - 0.09 * u, 0.075 * u, 0.09 * u, 0, 0, 7); ctx.fill();
+      ctx.beginPath(); ctx.arc(bx + 0.01 * u, by - 0.2 * u, 0.045 * u, 0, 7); ctx.fill();
+      for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(bx + s * 0.075 * u, by - 0.06 * u, 0.022 * u, 0.065 * u, s * 0.25, 0, 7); ctx.fill(); }
+      ctx.fillStyle = '#6E6A63'; ctx.beginPath(); ctx.ellipse(bx + 0.015 * u, by - 0.19 * u, 0.025 * u, 0.02 * u, 0, 0, 7); ctx.fill(); }); }
     if (d === 'corazon_tejado') { const [hx, hy] = enFrente(o, plano ? -0.05 : 0, 0); put(arriba + 0.03, () => drawHeartAt(hx, hy, z + hTop + 0.13, 0.16)); }   // grande, con la punta apoyada en el centro de la cumbrera
     if (d === 'gatos') { cat('#4A4A4A', 1.2); cat(undefined, 1.2); }
     if (d === 'gatos_techo') { const a = techo(), b = techo(); put(arriba, () => { drawCat(a[0], a[1], a[2], t, 1.05, '#4A4A4A'); drawCat(b[0], b[1], b[2], t + 1, 1.05); }); }

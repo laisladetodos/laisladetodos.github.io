@@ -1,8 +1,8 @@
 {
- "dia": 8,
- "habitantes": 215,
+ "dia": 9,
+ "habitantes": 223,
  "radio": 3.6,
- "actualizado": "2026-11-10",
+ "actualizado": "2026-11-11",
  "construcciones": [
   {
    "tipo": "casa",
@@ -323,8 +323,10 @@
    "color": "#2E6FD8",
    "detalles": [
     "gato_negro",
-    "flores"
-   ]
+    "flores",
+    "piscina"
+   ],
+   "usuario": "@lia_24ap"
   },
   {
    "tipo": "casa",
@@ -429,7 +431,11 @@
    "forma": "colegio",
    "dia": 5,
    "color": "#2E6FD8",
-   "pared": "#FFFFFF"
+   "pared": "#FFFFFF",
+   "detalles": [
+    "placas_solares"
+   ],
+   "usuario": "@vika.pona"
   },
   {
    "tipo": "casa",
@@ -553,11 +559,12 @@
    "dia": 7
   },
   {
-   "tipo": "casa",
-   "forma": "casa",
+   "tipo": "negocio",
+   "forma": "kebab",
    "color": "#9FE7E0",
    "pared": "#CDB2EC",
-   "dia": 7
+   "dia": 7,
+   "usuario": "@paulamarie358"
   },
   {
    "tipo": "negocio",
@@ -593,7 +600,10 @@
   {
    "tipo": "negocio",
    "forma": "recreativos",
-   "dia": 8
+   "dia": 8,
+   "detalles": [
+    "neones"
+   ]
   },
   {
    "tipo": "casa",
@@ -622,9 +632,18 @@
    "tipo": "negocio",
    "forma": "bomberos",
    "dia": 8
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 9,
+   "color": "#4FA36B",
+   "detalles": [
+    "estatua_gorila"
+   ]
   }
  ],
- "basicas": 140,
- "nuevos_hoy": 17,
+ "basicas": 148,
+ "nuevos_hoy": 8,
  "ferry_max_nuevos": 65
 }
