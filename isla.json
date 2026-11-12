@@ -1,8 +1,8 @@
 {
- "dia": 9,
- "habitantes": 223,
+ "dia": 10,
+ "habitantes": 227,
  "radio": 3.6,
- "actualizado": "2026-11-11",
+ "actualizado": "2026-11-12",
  "construcciones": [
   {
    "tipo": "casa",
@@ -69,8 +69,10 @@
    "dia": 2,
    "color": "#4FA36B",
    "detalles": [
-    "gatos"
-   ]
+    "gatos",
+    "estatuas_gatos"
+   ],
+   "usuario": "@llapiz200"
   },
   {
    "tipo": "casa",
@@ -91,7 +93,8 @@
    "color": "#2E8FA8",
    "detalles": [
     "espana",
-    "terraza"
+    "terraza",
+    "luces"
    ]
   },
   {
@@ -324,7 +327,8 @@
    "detalles": [
     "gato_negro",
     "flores",
-    "piscina"
+    "piscina",
+    "arbusto_gato"
    ],
    "usuario": "@lia_24ap"
   },
@@ -392,7 +396,7 @@
    "forma": "casa",
    "dia": 5,
    "color": "#8B5A2B",
-   "pared": "#C8643C",
+   "pared": "#9A9A9A",
    "usuario": "@mateeee_12",
    "detalles": [
     "flores"
@@ -541,7 +545,7 @@
   },
   {
    "tipo": "negocio",
-   "forma": "tienda",
+   "forma": "biblioteca",
    "color": "#3D7DD8",
    "dia": 7,
    "usuario": "@alonso294797309"
@@ -579,9 +583,14 @@
    "usuario": "@bjl594"
   },
   {
-   "tipo": "negocio",
-   "forma": "escenario",
-   "dia": 8
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 8,
+   "color": "#3E9A4F",
+   "detalles": [
+    "vivero"
+   ],
+   "usuario": "@carmennn_014"
   },
   {
    "tipo": "casa",
@@ -603,7 +612,8 @@
    "dia": 8,
    "detalles": [
     "neones"
-   ]
+   ],
+   "cartel": "MINI CASINO"
   },
   {
    "tipo": "casa",
@@ -641,9 +651,35 @@
    "detalles": [
     "estatua_gorila"
    ]
+  },
+  {
+   "tipo": "negocio",
+   "forma": "bicis",
+   "dia": 10
+  },
+  {
+   "tipo": "negocio",
+   "forma": "pesca",
+   "th": 1.05,
+   "dia": 10
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "color": "#2E8FA8",
+   "detalles": [
+    "campo_futbol"
+   ],
+   "dia": 10,
+   "usuario": "@enzosa70"
+  },
+  {
+   "tipo": "negocio",
+   "forma": "videojuegos",
+   "dia": 10
   }
  ],
  "basicas": 148,
- "nuevos_hoy": 8,
+ "nuevos_hoy": 4,
  "ferry_max_nuevos": 65
 }
