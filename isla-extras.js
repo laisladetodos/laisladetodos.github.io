@@ -114,6 +114,39 @@ function drawPiscinaPublica(o, z, t) {
   const u = U(); for (const [dx, dy, col] of [[-0.3, 0.34, '#F2614C'], [0.05, 0.34, '#FFC83D'], [0.32, 0.34, '#2E8FA8']]) { const [bx, by] = P(o.x + dx, o.y + dy, z); ctx.fillStyle = '#9A9A9A'; ctx.fillRect(bx - 0.006 * u, by - 0.3 * u, 0.012 * u, 0.3 * u);
     ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(bx, by - 0.3 * u, 0.13 * u, 0.06 * u, 0, Math.PI, 2 * Math.PI); ctx.fill(); ctx.fillRect(bx - 0.13 * u, by - 0.3 * u, 0.26 * u, 0.012 * u); }
 }
+function drawFeria(o, z, t) {   // feria pequeña: noria que gira y una caseta de rayas, dentro de su parcela
+  const g = 0.42, u = U(); sq(o.x - g, o.y - g, o.x + g, o.y + g, z + 0.006, '#EADFC8');
+  const cx = o.x - 0.08, cy = o.y - 0.1, R = 0.36, hub = P(cx, cy, z + 0.5), r = R * u;
+  ctx.strokeStyle = '#5B6470'; ctx.lineWidth = Math.max(2, u * 0.028); ctx.lineCap = 'round';
+  for (const s2 of [-1, 1]) { const b = P(cx + s2 * 0.2, cy - s2 * 0.2, z); ctx.beginPath(); ctx.moveTo(hub[0], hub[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+  ctx.strokeStyle = '#E8384F'; ctx.lineWidth = Math.max(2, u * 0.026); ctx.beginPath(); ctx.arc(hub[0], hub[1], r, 0, 7); ctx.stroke();
+  ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = Math.max(1, u * 0.012); ctx.beginPath(); ctx.arc(hub[0], hub[1], r * 0.72, 0, 7); ctx.stroke();
+  const cols = ['#FFC83D', '#2E8FA8', '#E76F8A', '#4FA36B', '#8E6CC2', '#F29F4B', '#3D7DD8', '#FF6B6B'];
+  for (let i = 0; i < 8; i++) { const an = t * 0.5 + i / 8 * 6.283, px = hub[0] + Math.cos(an) * r, py = hub[1] + Math.sin(an) * r;
+    ctx.strokeStyle = '#8A93A0'; ctx.lineWidth = Math.max(1, u * 0.01); ctx.beginPath(); ctx.moveTo(hub[0], hub[1]); ctx.lineTo(px, py); ctx.stroke();
+    ctx.fillStyle = cols[i]; ctx.strokeStyle = C.navy; ctx.lineWidth = Math.max(1, u * 0.008); ctx.beginPath(); ctx.roundRect(px - 0.045 * u, py, 0.09 * u, 0.075 * u, 0.02 * u); ctx.fill(); ctx.stroke(); }
+  ctx.fillStyle = '#FFC83D'; ctx.beginPath(); ctx.arc(hub[0], hub[1], 0.035 * u, 0, 7); ctx.fill();
+  const sx = o.x + 0.2, sy = o.y + 0.2; box(sx - 0.13, sy - 0.1, 0.26, 0.2, 0.16, z, '#FFF8EA');
+  for (let i = 0; i < 4; i++) fillPoly([P(sx - 0.15 + i * 0.075, sy - 0.12, z + 0.16), P(sx - 0.15 + (i + 1) * 0.075, sy - 0.12, z + 0.16), P(sx - 0.15 + (i + 1) * 0.075, sy + 0.12, z + 0.16), P(sx - 0.15 + i * 0.075, sy + 0.12, z + 0.16)].map((p, k) => k < 2 ? [p[0], p[1] - 0.05 * u] : p), i % 2 ? '#FFFFFF' : '#E8384F');
+  signBoard(o.x + 0.32, o.y - 0.3, z, '#FFE45C', 'FERIA');
+}
+function drawPajaros(o, z, t) {   // zona para ver pájaros: caseta-observatorio de madera, comedero, árboles y pajaritos
+  const g = 0.42, u = U(); sq(o.x - g, o.y - g, o.x + g, o.y + g, z + 0.006, '#7CC562');
+  for (const [dx, dy, s2] of [[-0.28, -0.26, 0.8], [0.02, -0.3, 0.6], [-0.3, 0.05, 0.65]]) drawTree({ x: o.x + dx, y: o.y + dy, s: s2, col: '#3E9A4F' }, z);
+  const hx = o.x + 0.2, hy = o.y - 0.02;   // observatorio sobre pilotes con rendija para mirar
+  for (const [a, b] of [[-0.1, -0.1], [0.1, -0.1], [-0.1, 0.1], [0.1, 0.1]]) box(hx + a - 0.015, hy + b - 0.015, 0.03, 0.03, 0.14, z, '#6B4424');
+  box(hx - 0.14, hy - 0.14, 0.28, 0.28, 0.22, z + 0.14, '#B07443', { tcol: '#8A5A30' });
+  fillPoly([P(hx - 0.1, hy + 0.14, z + 0.25), P(hx + 0.1, hy + 0.14, z + 0.25), P(hx + 0.1, hy + 0.14, z + 0.3), P(hx - 0.1, hy + 0.14, z + 0.3)], '#2A1C12');
+  fillPoly([P(hx + 0.14, hy - 0.1, z + 0.25), P(hx + 0.14, hy + 0.1, z + 0.25), P(hx + 0.14, hy + 0.1, z + 0.3), P(hx + 0.14, hy - 0.1, z + 0.3)], '#2A1C12');
+  const [px, py] = P(o.x - 0.1, o.y + 0.26, z); ctx.fillStyle = '#6B4424'; ctx.fillRect(px - 0.01 * u, py - 0.2 * u, 0.02 * u, 0.2 * u);   // comedero
+  ctx.fillStyle = '#C98C57'; ctx.fillRect(px - 0.07 * u, py - 0.22 * u, 0.14 * u, 0.025 * u); ctx.fillStyle = '#B5452E'; ctx.beginPath(); ctx.moveTo(px - 0.08 * u, py - 0.28 * u); ctx.lineTo(px, py - 0.34 * u); ctx.lineTo(px + 0.08 * u, py - 0.28 * u); ctx.fill();
+  const bird = (bx, by, col, fl) => { ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(bx, by, 0.028 * u, 0.02 * u, 0, 0, 7); ctx.fill(); ctx.beginPath(); ctx.arc(bx + 0.024 * u, by - 0.014 * u, 0.014 * u, 0, 7); ctx.fill();
+    ctx.fillStyle = '#F2A33A'; ctx.beginPath(); ctx.moveTo(bx + 0.036 * u, by - 0.016 * u); ctx.lineTo(bx + 0.052 * u, by - 0.012 * u); ctx.lineTo(bx + 0.036 * u, by - 0.006 * u); ctx.fill();
+    if (fl != null) { ctx.strokeStyle = col; ctx.lineWidth = Math.max(1.5, u * 0.014); ctx.beginPath(); ctx.moveTo(bx - 0.04 * u, by - fl * 0.035 * u); ctx.lineTo(bx, by - 0.005 * u); ctx.lineTo(bx + 0.02 * u, by - 0.02 * u - fl * 0.03 * u); ctx.stroke(); } };
+  bird(px - 0.03 * u, py - 0.24 * u, '#E8384F'); bird(px + 0.035 * u, py - 0.24 * u, '#3D7DD8');
+  const [cx, cy] = P(o.x - 0.05, o.y - 0.05, z + 0.62);
+  for (let i = 0; i < 3; i++) { const an = t * 1.3 + i * 2.1; bird(cx + Math.cos(an) * (0.22 + i * 0.05) * u, cy + Math.sin(an) * 0.07 * u - i * 0.06 * u, ['#FFC83D', '#3D7DD8', '#E8384F'][i], Math.sin(t * 14 + i * 2)); }
+}
 function drawPesca(o, z, t) {   // zona de pesca en la playa: pasarela de madera que entra en el mar, cañas, cubo y taburete
   const th = Math.atan2(o.y, o.x), dx = Math.cos(th), dy = Math.sin(th), nx = -dy, ny = dx, L = 1.15, w = 0.11, zz = Z_SAND + 0.05;
   const pt = (a, b, h) => P(o.x + dx * a + nx * b, o.y + dy * a + ny * b, h);
@@ -281,6 +314,10 @@ function drawCustom(o, z, t) {
   if (f === 'videojuegos') return shopWithSign(o, z, '#3B2F8F', 'VIDEOJUEGOS', '#7CF5C3', '#E8E6FA');
   if (f === 'biblioteca') return shopWithSign(o, z, '#8A4B2A', 'BIBLIOTECA', '#FFF3D6', '#F3E6CF');
   if (f === 'pesca') return drawPesca(o, z, t);
+  if (f === 'panaderia') return shopWithSign(o, z, '#D98C3A', 'PANADERÍA', '#FFF3D6', '#FFF8EA');
+  if (f === 'fotografia') return shopWithSign(o, z, '#2B2B33', 'FOTOS', '#FFFFFF', '#F1EEE8');
+  if (f === 'feria') return drawFeria(o, z, t);
+  if (f === 'pajaros') return drawPajaros(o, z, t);
   if (f === 'casa' && (o.det || o.detalles || []).includes('campo_futbol')) {   // casa con un pequeño campo de fútbol dentro de su parcela (delante, en el lado que se ve)
     const vis = (o.face === 'N' || o.face === 'W') ? -1 : 1, [fr, sd] = FRENTE[o.face || 'S'];
     const c = (a, b, zz) => P(o.x + fr[0] * a * vis + sd[0] * b, o.y + fr[1] * a * vis + sd[1] * b, zz), a0 = 0.1, a1 = 0.46, b0 = -0.44, b1 = 0.44;
@@ -383,7 +420,7 @@ function alturaTejado(o) {   // [altura de la cumbrera, ¿tejado plano?]
   if (['tienda'].includes(f)) return [0.48, true];
   if (['bar'].includes(f)) return [0.44, true];
   if (['veterinario'].includes(f)) return [0.38, true];
-  if (['kebab', 'pizzeria', 'moviles', 'comisaria', 'restaurante', 'lavanderia', 'super', 'peluqueria', 'mascotas', 'kayaks', 'mexicano', 'carniceria', 'churreria', 'cuartel', 'colegio', 'pollo', 'recreativos', 'bomberos', 'bicis', 'videojuegos', 'biblioteca'].includes(f)) return [0.42, true];
+  if (['kebab', 'pizzeria', 'moviles', 'comisaria', 'restaurante', 'lavanderia', 'super', 'peluqueria', 'mascotas', 'kayaks', 'mexicano', 'carniceria', 'churreria', 'cuartel', 'colegio', 'pollo', 'recreativos', 'bomberos', 'bicis', 'videojuegos', 'biblioteca', 'panaderia', 'fotografia'].includes(f)) return [0.42, true];
   if (f === 'refugio') return [0.7, false];
   if (f === 'perrera') return [0.68, false];
   if (f === 'tigre' || f === 'unicornio') return [0.74, false];
@@ -467,6 +504,19 @@ function drawDetails(o, z, t, push) {   // push(d, fn): cada detalle con su prop
         ctx.strokeStyle = '#3A3A3A'; ctx.lineWidth = Math.max(1, u * 0.006); ctx.beginPath(); pts.forEach((p, j) => j ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
         ctx.save(); for (const p of pts.slice(0, 6)) { const col = cols[n++ % 5], on = 0.75 + 0.25 * Math.sin(t * 4 + n); ctx.shadowColor = col; ctx.shadowBlur = u * 0.12 * on; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p[0], p[1] + u * 0.012, Math.max(2, u * 0.022), 0, 7); ctx.fill(); } ctx.restore(); }
       for (const c0 of cor.slice(0, 4)) { const a = P(c0[0], c0[1], z + hTop), b = P(c0[0], c0[1], zz); ctx.strokeStyle = '#5A4A3A'; ctx.lineWidth = Math.max(1.5, u * 0.012); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); } });
+    if (d === 'estatua') { const [x, y] = pet(); put(x + y + 0.02, () => {   // estatua de piedra (figura genérica, sin personajes) sobre un pedestal
+      box(x - 0.11, y - 0.11, 0.22, 0.22, 0.14, z, '#B9B4AA', { tcol: '#D6D1C7' });
+      const [bx, by] = P(x, y, z + 0.14), u = U() * 1.5, g = '#8F8B84', g2 = '#A9A59D';
+      ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(bx - 0.055 * u, by); ctx.lineTo(bx - 0.04 * u, by - 0.17 * u); ctx.lineTo(bx + 0.04 * u, by - 0.17 * u); ctx.lineTo(bx + 0.055 * u, by); ctx.fill();
+      ctx.strokeStyle = g; ctx.lineWidth = 0.028 * u; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(bx - 0.04 * u, by - 0.15 * u); ctx.lineTo(bx - 0.075 * u, by - 0.07 * u); ctx.moveTo(bx + 0.04 * u, by - 0.15 * u); ctx.lineTo(bx + 0.085 * u, by - 0.23 * u); ctx.stroke();
+      ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(bx, by - 0.215 * u, 0.042 * u, 0, 7); ctx.fill(); }); }
+    if (d === 'bici') { const [x, y] = pet(); put(x + y + 0.02, () => {   // bici de montaña aparcada en el jardín que se ve
+      const [bx, by] = P(x, y, z), u = U() * 1.5, r = 0.055 * u, y0 = by - r;
+      ctx.strokeStyle = '#22262E'; ctx.lineWidth = Math.max(2, u * 0.018); for (const s2 of [-1, 1]) { ctx.beginPath(); ctx.arc(bx + s2 * 0.075 * u, y0, r, 0, 7); ctx.stroke(); }
+      ctx.strokeStyle = '#E8384F'; ctx.lineWidth = Math.max(2, u * 0.016); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(bx - 0.075 * u, y0); ctx.lineTo(bx - 0.03 * u, y0 - 0.085 * u); ctx.lineTo(bx + 0.045 * u, y0 - 0.085 * u); ctx.lineTo(bx + 0.005 * u, y0); ctx.lineTo(bx - 0.075 * u, y0); ctx.moveTo(bx - 0.03 * u, y0 - 0.085 * u); ctx.lineTo(bx + 0.005 * u, y0); ctx.moveTo(bx + 0.075 * u, y0); ctx.lineTo(bx + 0.04 * u, y0 - 0.115 * u); ctx.stroke();
+      ctx.strokeStyle = '#22262E'; ctx.beginPath(); ctx.moveTo(bx + 0.02 * u, y0 - 0.12 * u); ctx.lineTo(bx + 0.06 * u, y0 - 0.115 * u); ctx.moveTo(bx - 0.05 * u, y0 - 0.1 * u); ctx.lineTo(bx - 0.015 * u, y0 - 0.1 * u); ctx.stroke(); }); }
+    if (d === 'mas_flores') { for (const [a2, b0] of [[0.44, -0.34], [0.24, -0.4], [0.24, 0.4]]) { const [x, y] = enFrente(o, a2 * vis, 0); put(x + y + 0.01, () => { const cols = ['#B66DFF', '#F2614C', '#FFFFFF', '#FFC83D', '#E76F8A'], n = a2 > 0.4 ? 9 : 1;
+        for (let i = 0; i < n; i++) { const [fx0, fy0] = enFrente(o, a2 * vis, n > 1 ? -0.34 + i * 0.085 : b0), [fx, fy] = P(fx0, fy0, z); ctx.fillStyle = '#3E9A4F'; ctx.fillRect(fx - 1, fy - U() * 0.06, 2, U() * 0.06); ctx.fillStyle = cols[(i + (b0 > 0 ? 2 : 0)) % 5]; ctx.beginPath(); ctx.arc(fx, fy - U() * 0.07, Math.max(2, U() * 0.03), 0, 7); ctx.fill(); } }); } }
     if (d === 'estatua_gorila') { const [x, y] = pet(); put(x + y + 0.02, () => {   // estatua de un gorila (genérico) sobre un pedestal, ×1,7 y en el jardín que se ve
       box(x - 0.13, y - 0.13, 0.26, 0.26, 0.16, z, '#B9B4AA', { tcol: '#D6D1C7' });
       const [bx, by] = P(x, y, z + 0.16), u = U() * 1.7, g = '#3E3B38';

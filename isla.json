@@ -1,8 +1,8 @@
 {
- "dia": 10,
- "habitantes": 227,
+ "dia": 11,
+ "habitantes": 241,
  "radio": 3.6,
- "actualizado": "2026-11-12",
+ "actualizado": "2026-11-13",
  "construcciones": [
   {
    "tipo": "casa",
@@ -328,7 +328,8 @@
     "gato_negro",
     "flores",
     "piscina",
-    "arbusto_gato"
+    "arbusto_gato",
+    "mas_flores"
    ],
    "usuario": "@lia_24ap"
   },
@@ -548,7 +549,10 @@
    "forma": "biblioteca",
    "color": "#3D7DD8",
    "dia": 7,
-   "usuario": "@alonso294797309"
+   "usuario": "@alonso294797309",
+   "detalles": [
+    "bici"
+   ]
   },
   {
    "tipo": "casa",
@@ -677,9 +681,56 @@
    "tipo": "negocio",
    "forma": "videojuegos",
    "dia": 10
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 11,
+   "color": "#F2614C",
+   "usuario": "@mr.cosas.random3"
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 11,
+   "color": "#D7263D",
+   "detalles": [
+    "campo_futbol"
+   ],
+   "usuario": "@enrique20158"
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 11,
+   "color": "#8E6CC2",
+   "detalles": [
+    "estatua"
+   ],
+   "usuario": "@aimarquintanacamp"
+  },
+  {
+   "tipo": "negocio",
+   "forma": "panaderia",
+   "dia": 11
+  },
+  {
+   "tipo": "negocio",
+   "forma": "feria",
+   "dia": 11
+  },
+  {
+   "tipo": "negocio",
+   "forma": "fotografia",
+   "dia": 11
+  },
+  {
+   "tipo": "negocio",
+   "forma": "pajaros",
+   "dia": 11
   }
  ],
- "basicas": 148,
- "nuevos_hoy": 4,
+ "basicas": 157,
+ "nuevos_hoy": 14,
  "ferry_max_nuevos": 65
 }
