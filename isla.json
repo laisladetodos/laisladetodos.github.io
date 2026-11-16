@@ -1,8 +1,8 @@
 {
- "dia": 11,
- "habitantes": 241,
+ "dia": 12,
+ "habitantes": 240,
  "radio": 3.6,
- "actualizado": "2026-11-13",
+ "actualizado": "2026-11-16",
  "construcciones": [
   {
    "tipo": "casa",
@@ -70,7 +70,8 @@
    "color": "#4FA36B",
    "detalles": [
     "gatos",
-    "estatuas_gatos"
+    "estatuas_gatos",
+    "parque_gatos"
    ],
    "usuario": "@llapiz200"
   },
@@ -329,7 +330,8 @@
     "flores",
     "piscina",
     "arbusto_gato",
-    "mas_flores"
+    "mas_flores",
+    "chimenea"
    ],
    "usuario": "@lia_24ap"
   },
@@ -728,9 +730,19 @@
    "tipo": "negocio",
    "forma": "pajaros",
    "dia": 11
+  },
+  {
+   "tipo": "casa",
+   "forma": "casa",
+   "dia": 12,
+   "color": "#FFC83D",
+   "detalles": [
+    "tobogan"
+   ],
+   "usuario": "@viooo3030"
   }
  ],
- "basicas": 157,
- "nuevos_hoy": 14,
+ "basicas": 155,
+ "nuevos_hoy": 2,
  "ferry_max_nuevos": 65
 }

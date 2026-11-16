@@ -517,6 +517,26 @@ function drawDetails(o, z, t, push) {   // push(d, fn): cada detalle con su prop
       ctx.strokeStyle = '#22262E'; ctx.beginPath(); ctx.moveTo(bx + 0.02 * u, y0 - 0.12 * u); ctx.lineTo(bx + 0.06 * u, y0 - 0.115 * u); ctx.moveTo(bx - 0.05 * u, y0 - 0.1 * u); ctx.lineTo(bx - 0.015 * u, y0 - 0.1 * u); ctx.stroke(); }); }
     if (d === 'mas_flores') { for (const [a2, b0] of [[0.44, -0.34], [0.24, -0.4], [0.24, 0.4]]) { const [x, y] = enFrente(o, a2 * vis, 0); put(x + y + 0.01, () => { const cols = ['#B66DFF', '#F2614C', '#FFFFFF', '#FFC83D', '#E76F8A'], n = a2 > 0.4 ? 9 : 1;
         for (let i = 0; i < n; i++) { const [fx0, fy0] = enFrente(o, a2 * vis, n > 1 ? -0.34 + i * 0.085 : b0), [fx, fy] = P(fx0, fy0, z); ctx.fillStyle = '#3E9A4F'; ctx.fillRect(fx - 1, fy - U() * 0.06, 2, U() * 0.06); ctx.fillStyle = cols[(i + (b0 > 0 ? 2 : 0)) % 5]; ctx.beginPath(); ctx.arc(fx, fy - U() * 0.07, Math.max(2, U() * 0.03), 0, 7); ctx.fill(); } }); } }
+    if (d === 'chimenea') put(arriba + 0.03, () => {   // chimenea de ladrillo en el tejado, con humo
+      const [x, y] = enFrente(o, 0, 0.16), zb = z + hTop - (plano ? 0 : 0.14), hh = plano ? 0.16 : 0.2;
+      box(x - 0.045, y - 0.045, 0.09, 0.09, hh, zb, '#B5452E', { tcol: '#5A3A30' }); box(x - 0.055, y - 0.055, 0.11, 0.11, 0.025, zb + hh, '#8F3524', { tcol: '#3A2A26' });
+      const [bx, by] = P(x, y, zb + hh + 0.03), u = U();
+      for (let i = 0; i < 3; i++) { const f2 = ((t * 0.45 + i / 3) % 1); ctx.fillStyle = `rgba(245,245,245,${0.75 * (1 - f2)})`; ctx.beginPath(); ctx.arc(bx + Math.sin(f2 * 5 + i) * 0.03 * u + f2 * 0.05 * u, by - f2 * 0.3 * u, (0.03 + f2 * 0.045) * u, 0, 7); ctx.fill(); } });
+    if (d === 'tobogan') { const [x, y] = pet(); put(x + y + 0.02, () => {   // tobogán en el jardín que se ve: escalera, plataforma y rampa
+      const u = U(), h = 0.2;
+      for (const [a, b] of [[-0.05, -0.04], [0.03, -0.04], [-0.05, 0.04], [0.03, 0.04]]) box(x - 0.1 + a, y + b - 0.008, 0.016, 0.016, h, z, '#3D7DD8');
+      box(x - 0.16, y - 0.05, 0.1, 0.1, 0.02, z + h, '#FFC83D');
+      fillPoly([P(x - 0.06, y - 0.045, z + h + 0.02), P(x - 0.06, y + 0.045, z + h + 0.02), P(x + 0.2, y + 0.045, z + 0.02), P(x + 0.2, y - 0.045, z + 0.02)], '#E8384F');
+      ctx.strokeStyle = '#B5222F'; ctx.lineWidth = Math.max(1.5, u * 0.014); for (const b of [-0.045, 0.045]) { const p0 = P(x - 0.06, y + b, z + h + 0.045), p1 = P(x + 0.2, y + b, z + 0.045); ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }
+      ctx.strokeStyle = '#3D7DD8'; ctx.lineWidth = Math.max(1.5, u * 0.012); for (let i = 0; i <= 3; i++) { const p0 = P(x - 0.16 - (3 - i) * 0.02, y - 0.04, z + h * i / 3.6), p1 = P(x - 0.16 - (3 - i) * 0.02, y + 0.04, z + h * i / 3.6); ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); }
+      for (const b of [-0.04, 0.04]) { const p0 = P(x - 0.225, y + b, z), p1 = P(x - 0.16, y + b, z + h + 0.02); ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); ctx.stroke(); } }); }
+    if (d === 'parque_gatos') { const [x, y] = pet(); put(x + y + 0.02, () => {   // parque para gatos: árbol rascador de dos pisos con un gato arriba y un ovillo
+      const u = U();
+      box(x - 0.11, y - 0.11, 0.22, 0.22, 0.025, z, '#C9B89A', { tcol: '#E2D3B8' });
+      box(x - 0.085, y - 0.02, 0.035, 0.035, 0.3, z + 0.025, '#C98C57'); box(x + 0.04, y - 0.02, 0.035, 0.035, 0.17, z + 0.025, '#C98C57');
+      box(x + 0.0, y - 0.07, 0.12, 0.13, 0.025, z + 0.195, '#8E6CC2', { tcol: '#A98BD8' }); box(x - 0.13, y - 0.07, 0.13, 0.13, 0.025, z + 0.325, '#8E6CC2', { tcol: '#A98BD8' });
+      drawCat(x - 0.065, y, z + 0.35, t, 0.8, '#F29F4B');
+      const [bx, by] = P(x + 0.06, y + 0.08, z + 0.03); ctx.fillStyle = '#E8384F'; ctx.beginPath(); ctx.arc(bx, by - 0.02 * u, 0.028 * u, 0, 7); ctx.fill(); }); }
     if (d === 'estatua_gorila') { const [x, y] = pet(); put(x + y + 0.02, () => {   // estatua de un gorila (genérico) sobre un pedestal, ×1,7 y en el jardín que se ve
       box(x - 0.13, y - 0.13, 0.26, 0.26, 0.16, z, '#B9B4AA', { tcol: '#D6D1C7' });
       const [bx, by] = P(x, y, z + 0.16), u = U() * 1.7, g = '#3E3B38';
