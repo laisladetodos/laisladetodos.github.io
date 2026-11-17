@@ -504,6 +504,18 @@ function drawDetails(o, z, t, push) {   // push(d, fn): cada detalle con su prop
         ctx.strokeStyle = '#3A3A3A'; ctx.lineWidth = Math.max(1, u * 0.006); ctx.beginPath(); pts.forEach((p, j) => j ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke();
         ctx.save(); for (const p of pts.slice(0, 6)) { const col = cols[n++ % 5], on = 0.75 + 0.25 * Math.sin(t * 4 + n); ctx.shadowColor = col; ctx.shadowBlur = u * 0.12 * on; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(p[0], p[1] + u * 0.012, Math.max(2, u * 0.022), 0, 7); ctx.fill(); } ctx.restore(); }
       for (const c0 of cor.slice(0, 4)) { const a = P(c0[0], c0[1], z + hTop), b = P(c0[0], c0[1], zz); ctx.strokeStyle = '#5A4A3A'; ctx.lineWidth = Math.max(1.5, u * 0.012); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); } });
+    if (d === 'arboles_luces') for (const k of [-1, 1]) { const [x, y] = enFrente(o, 0.05, k * 0.62); put(x + y + 0.01, () => {   // árboles a los lados con lucecitas
+      drawTree({ x, y, s: 0.8, col: '#3E9A4F' }, z); const [bx, by] = P(x, y, z), u = U(), r = 0.24 * u * 0.8, cy = by - 0.42 * u * 0.8, cols = ['#FFD84D', '#FF6B6B', '#5EE0FF', '#8CFF8A', '#FF9DF0'];
+      ctx.save(); for (let i = 0; i < 11; i++) { const an = i * 2.4 + k, rr = r * (0.35 + 0.55 * ((i * 37) % 10) / 10), col = cols[i % 5], on = 0.7 + 0.3 * Math.sin(t * 4 + i * 1.7);
+        ctx.shadowColor = col; ctx.shadowBlur = u * 0.1 * on; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(bx + Math.cos(an) * rr, cy + Math.sin(an) * rr, Math.max(1.5, u * 0.017), 0, 7); ctx.fill(); } ctx.restore(); }); }
+    if (d === 'terraza_casa') { const c1 = enFrente(o, 0.12 * vis, 0.58), c2 = enFrente(o, 0.12 * vis, -0.58), [x, y] = (c1[0] + c1[1] > c2[0] + c2[1]) ? c1 : c2; put(x + y + 0.02, () => {   // terraza de madera junto a la casa: mesa, sillas y sombrilla
+      const u = U(); box(x - 0.17, y - 0.17, 0.34, 0.34, 0.035, z, '#C98C57', { tcol: '#DDA46E' });
+      ctx.strokeStyle = 'rgba(90,58,30,0.35)'; ctx.lineWidth = Math.max(1, u * 0.006); for (let i = 1; i < 5; i++) { const a2 = P(x - 0.17 + i * 0.068, y - 0.17, z + 0.035), b2 = P(x - 0.17 + i * 0.068, y + 0.17, z + 0.035); ctx.beginPath(); ctx.moveTo(a2[0], a2[1]); ctx.lineTo(b2[0], b2[1]); ctx.stroke(); }
+      const zt = z + 0.035; for (const [cx, cy] of [[-0.09, 0], [0.09, 0]]) { box(x + cx - 0.03, y + cy - 0.03, 0.06, 0.06, 0.05, zt, '#FFFFFF'); box(x + cx - 0.03 + (cx > 0 ? 0.045 : 0), y + cy - 0.03, 0.015, 0.06, 0.1, zt, '#FFFFFF'); }
+      const [lx, ly] = P(x, y, zt), [mx, my] = P(x, y, zt + 0.09), [px, py] = P(x, y, zt + 0.3);
+      ctx.fillStyle = '#E6E1D8'; ctx.fillRect(lx - 0.006 * u, my, 0.012 * u, ly - my); ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.ellipse(mx, my, 0.06 * u, 0.03 * u, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#5A4A3A'; ctx.fillRect(px - 0.005 * u, py, 0.01 * u, my - py); ctx.fillStyle = '#E8384F'; ctx.beginPath(); ctx.moveTo(px - 0.14 * u, py + 0.03 * u); ctx.quadraticCurveTo(px, py - 0.08 * u, px + 0.14 * u, py + 0.03 * u); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.moveTo(px - 0.05 * u, py - 0.005 * u); ctx.quadraticCurveTo(px, py - 0.04 * u, px + 0.05 * u, py - 0.005 * u); ctx.lineTo(px + 0.03 * u, py + 0.03 * u); ctx.lineTo(px - 0.03 * u, py + 0.03 * u); ctx.closePath(); ctx.fill(); }); }
     if (d === 'estatua') { const [x, y] = pet(); put(x + y + 0.02, () => {   // estatua de piedra (figura genérica, sin personajes) sobre un pedestal
       box(x - 0.11, y - 0.11, 0.22, 0.22, 0.14, z, '#B9B4AA', { tcol: '#D6D1C7' });
       const [bx, by] = P(x, y, z + 0.14), u = U() * 1.5, g = '#8F8B84', g2 = '#A9A59D';

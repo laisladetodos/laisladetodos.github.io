@@ -1,8 +1,8 @@
 {
- "dia": 12,
- "habitantes": 240,
+ "dia": 13,
+ "habitantes": 242,
  "radio": 3.6,
- "actualizado": "2026-11-16",
+ "actualizado": "2026-11-17",
  "construcciones": [
   {
    "tipo": "casa",
@@ -95,7 +95,8 @@
    "detalles": [
     "espana",
     "terraza",
-    "luces"
+    "luces",
+    "arboles_luces"
    ]
   },
   {
@@ -331,7 +332,8 @@
     "piscina",
     "arbusto_gato",
     "mas_flores",
-    "chimenea"
+    "chimenea",
+    "terraza_casa"
    ],
    "usuario": "@lia_24ap"
   },
@@ -742,7 +744,7 @@
    "usuario": "@viooo3030"
   }
  ],
- "basicas": 155,
- "nuevos_hoy": 2,
+ "basicas": 157,
+ "nuevos_hoy": 4,
  "ferry_max_nuevos": 65
 }
